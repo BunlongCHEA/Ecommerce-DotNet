@@ -59,6 +59,8 @@ namespace EcommerceAPI.Controllers
                             CouponCode = o.CouponUserList != null ? o.CouponUserList.Coupon.Code : null, // include the coupon code
                             CouponDiscountAmount = o.CouponUserList != null ? o.CouponUserList.Coupon.DiscountAmount : 0, // include the discount from the coupon
                             CouponDescription = o.CouponUserList != null ? o.CouponUserList.Coupon.Desription : null, // include the description from the coupon
+                            AccountOrCardNumber = o.Payment != null ? o.Payment.AccountOrCardNumber : null, // include the account or card number
+                            TrackingNumber = o.Shipment != null ? o.Shipment.TrackingNumber : null, // include the tracking number
                         })
                         .ToListAsync();
 
@@ -105,6 +107,8 @@ namespace EcommerceAPI.Controllers
                                 CouponCode = o.CouponUserList != null ? o.CouponUserList.Coupon.Code : null, // include the coupon code
                                 CouponDiscountAmount = o.CouponUserList != null ? o.CouponUserList.Coupon.DiscountAmount : 0, // include the discount from the coupon
                                 CouponDescription = o.CouponUserList != null ? o.CouponUserList.Coupon.Desription : null, // include the description from the coupon
+                                AccountOrCardNumber = o.Payment != null ? o.Payment.AccountOrCardNumber : null, // include the account or card number
+                                TrackingNumber = o.Shipment != null ? o.Shipment.TrackingNumber : null, // include the tracking number
                             })
                             .FirstOrDefaultAsync();
 

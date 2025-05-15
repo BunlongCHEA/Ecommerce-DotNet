@@ -169,3 +169,4 @@ D:\ITStep\1_GitClone\EcommerceAPI\obj\Debug\net8.0\refint\EcommerceAPI.dll
 D:\ITStep\1_GitClone\EcommerceAPI\obj\Debug\net8.0\EcommerceAPI.pdb
 D:\ITStep\1_GitClone\EcommerceAPI\obj\Debug\net8.0\EcommerceAPI.genruntimeconfig.cache
 D:\ITStep\1_GitClone\EcommerceAPI\obj\Debug\net8.0\ref\EcommerceAPI.dll
+D:\ITStep\1_GitClone\EcommerceAPI\obj\Debug\net8.0\EcommerceAPI.sourcelink.json
