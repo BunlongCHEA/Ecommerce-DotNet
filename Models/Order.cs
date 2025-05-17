@@ -13,7 +13,7 @@ public class Order
     public DateTime? OrderDate { get; set; } // Date when the order was placed
     [Required]
     public string? Status { get; set; } // e.g., "Pending", "Completed", "Cancelled"
-    public Decimal? AmountAfterDiscount { get; set; } // Amount after applying any discounts
+    public Decimal? TotalFinalAmount { get; set; } // Amount after applying any discounts
     [Required]
     public int TotalQuantity { get; set; } // Total quantity of items in the order
     [Required]

@@ -8,13 +8,14 @@ using Microsoft.EntityFrameworkCore;
 namespace EcommerceAPI.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
-    [Authorize]
-    public class OrderController : ControllerBase
+    [Route("api/admin/order")]
+    // Apply the "Admin" policy to the entire controller
+    [Authorize(Policy = "Admin")]
+    public class AdminOrderController : ControllerBase
     {
         private readonly IOrderService _OrderService;
 
-        public OrderController(IOrderService orderService)
+        public AdminOrderController(IOrderService orderService)
         {
             _OrderService = orderService;
         }
@@ -66,32 +67,32 @@ namespace EcommerceAPI.Controllers
             return await _OrderService.CreateOrder(order, userId);
         }
 
-        // // PUT: api/order/{id}
-        // [HttpPut("{id}")]
-        // public async Task<IActionResult> UpdateOrder(int id, Order order)
-        // {
-        //     // Find the logged-in userId
-        //     var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        //     if (string.IsNullOrEmpty(userId))
-        //     {
-        //         return Unauthorized("User not authenticated or valid.");
-        //     }
+        // PUT: api/order/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateOrder(int id, Order order)
+        {
+            // Find the logged-in userId
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User not authenticated or valid.");
+            }
 
-        //     return await _OrderService.UpdateOrder(id, order, userId);
-        // }
+            return await _OrderService.UpdateOrder(id, order, userId);
+        }
 
-        // // DELETE: api/order/{id}
-        // [HttpDelete("{id}")]
-        // public async Task<IActionResult> DeleteOrder(int id)
-        // {
-        //     // Find the logged-in userId
-        //     var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        //     if (string.IsNullOrEmpty(userId))
-        //     {
-        //         return Unauthorized("User not authenticated or valid.");
-        //     }
+        // DELETE: api/order/{id}
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteOrder(int id)
+        {
+            // Find the logged-in userId
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User not authenticated or valid.");
+            }
 
-        //     return await _OrderService.DeleteOrder(id, userId);
-        // }
+            return await _OrderService.DeleteOrder(id, userId);
+        }
     }
 }
