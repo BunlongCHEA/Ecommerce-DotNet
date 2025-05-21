@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 // using EcommerceAPI.Models;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
@@ -7,13 +8,22 @@ public class Shipment
 {
     [Key]
     public int Id { get; set; }
+
     [Required]
+    [StringLength(100)]
     public string? TrackingNumber { get; set; } // Unique tracking number for the shipment
-    public DateTime? ShipmentDate { get; set; } // Date when the shipment was created
-    public DateTime? ExpectedDate { get; set; } // Expected date of shipment
-    public DateTime? DelayedDateFrom { get; set; } // Date from which the shipment is delayed
-    public DateTime? ArrivedDate { get; set; } // Actual arrived date
+
+    public DateTimeOffset? ShipmentDate { get; set; } // Date when the shipment was created
+
+    public DateTimeOffset? ExpectedDate { get; set; } // Expected date of shipment
+
+    public DateTimeOffset? DelayedDateFrom { get; set; } // Date from which the shipment is delayed
+
+    public DateTimeOffset? ArrivedDate { get; set; } // Actual arrived date
+
     [Required]
+    [DataType(DataType.Currency)]
+    [Column(TypeName = "decimal(20,2)")]
     public decimal ShippingCost { get; set; } // Cost of shipping
     
     public int ShipmentTypeId { get; set; } // Foreign key to ShipmentType

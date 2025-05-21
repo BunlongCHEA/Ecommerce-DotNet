@@ -34,7 +34,7 @@ namespace EcommerceAPI.Controllers
                                             p.CouponId,
                                             p.StoreId,
                                             CouponCode = p.Coupon != null ? p.Coupon.Code : "No Coupon", // Get the coupon code
-                                            DiscountAmount = p.Coupon != null ? p.Coupon.DiscountAmount : 0, // Get the discount amount
+                                            DiscountPercentage = p.Coupon != null ? p.Coupon.DiscountPercentage : 0, // Get the discount percentage
                                             StoreName = p.Store != null ? p.Store.Name : "Unknown", // Get the store name
                                             CategoryName = p.Category != null ? p.Category.Name : "Unknown", // Get the category name
                                             SubCategoryName = p.SubCategory != null ? p.SubCategory.Name : "Unknown", // Get the subcategory name
@@ -63,7 +63,7 @@ namespace EcommerceAPI.Controllers
                                             p.CouponId,
                                             p.StoreId,
                                             CouponCode = p.Coupon != null ? p.Coupon.Code : "No Coupon", // Get the coupon code
-                                            DiscountAmount = p.Coupon != null ? p.Coupon.DiscountAmount : 0, // Get the discount amount
+                                            DiscountPercentage = p.Coupon != null ? p.Coupon.DiscountPercentage : 0, // Get the discount percentage
                                             StoreName = p.Store != null ? p.Store.Name : "Unknown", // Get the store name
                                             CategoryName = p.Category != null ? p.Category.Name : "Unknown", // Get the category name
                                             SubCategoryName = p.SubCategory != null ? p.SubCategory.Name : "Unknown", // Get the subcategory name

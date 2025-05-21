@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
@@ -6,12 +7,21 @@ public class Product
 {
     [Key]
     public int Id { get; set; }
+
     [Required]
+    [StringLength(200)]
     public string Name { get; set; } = "unknow";
+
     [Required]
+    [DataType(DataType.Currency)]
+    [Column(TypeName = "decimal(20,2)")]
     public decimal Price { get; set; }
-    public string? Description { get; set; } = "";
+
+    [DataType(DataType.MultilineText)]
+    public string? Description { get; set; }
+
     [Required]
+    [StringLength(200)]
     public string? ImageUrl { get; set; }
 
     public int CategoryId { get; set; }

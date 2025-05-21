@@ -22,29 +22,47 @@ public class OrderService : IOrderService
                     {
                         o.Id,
                         o.OrderNumber,
-                        o.OrderDate,
                         o.Status,
                         o.TotalFinalAmount,
                         o.TotalQuantity,
                         o.TotalAmount,
+                        o.OrderDate,
+                        o.PackedDate,
                         o.CancelledDate,
                         o.CompletedDate,
+                        ShipmentDate = o.Shipment != null ? o.Shipment.ShipmentDate : null, // include the shipment date
+                        ExpectedDate = o.Shipment != null ? o.Shipment.ExpectedDate : null, // include the expected date
+                        DelayedDateFrom = o.Shipment != null ? o.Shipment.DelayedDateFrom : null, // include the delayed date
+                        ArrivedDate = o.Shipment != null ? o.Shipment.ArrivedDate : null, // include the arrived date
                         o.ShipmentId,
                         o.PaymentId,
                         o.CouponUserListId,
                         CouponIsUsed = o.CouponUserList != null ? o.CouponUserList.IsUsed : false, // include if the coupon is used
                         CouponExpiryDate = o.CouponUserList != null ? o.CouponUserList.ExpiryDate : null, // include the expiry date of the coupon
-                        CouponCode = o.CouponUserList != null && o.CouponUserList.Coupon != null ? o.CouponUserList.Coupon.Code : null, // include the coupon code
-                        CouponDiscountAmount = o.CouponUserList != null && o.CouponUserList.Coupon != null ? o.CouponUserList.Coupon.DiscountAmount : 0, // include the discount from the coupon
-                        CouponDescription = o.CouponUserList != null && o.CouponUserList.Coupon != null ? o.CouponUserList.Coupon.Desription : null, // include the description from the coupon
+                        CouponCode = o.CouponUserList != null && o.CouponUserList.Coupon != null
+                            ? o.CouponUserList.Coupon.Code 
+                            : null, // include the coupon code
+                        CouponDiscountPercentage = o.CouponUserList != null && o.CouponUserList.Coupon != null
+                            ? o.CouponUserList.Coupon.DiscountPercentage 
+                            : 0, // include the discount from the coupon
+                        CouponDescription = o.CouponUserList != null && o.CouponUserList.Coupon != null
+                            ? o.CouponUserList.Coupon.Desription 
+                            : null, // include the description from the coupon
                         AccountOrCardNumber = o.Payment != null ? o.Payment.AccountOrCardNumber : null, // include the account or card number
                         TrackingNumber = o.Shipment != null ? o.Shipment.TrackingNumber : null, // include the tracking number
                         ShippingCost = o.Shipment != null ? o.Shipment.ShippingCost : 0, // include the shipping cost
-                        Address = o.Shipment != null && o.Shipment.Location != null ? o.Shipment.Location.Address : null, // include the address
-                        PostalCode = o.Shipment != null && o.Shipment.Location != null ? o.Shipment.Location.PostalCode : null, // include the postal code
-                        Region = o.Shipment != null && o.Shipment.Location != null && o.Shipment.Location.LocationRegion != null ? o.Shipment.Location.LocationRegion.Region : null, // include the region
-                        CountryName = o.Shipment != null && o.Shipment.Location != null && o.Shipment.Location.LocationRegion != null && o.Shipment.Location.LocationRegion.LocationCountry != null ? o.Shipment.Location.LocationRegion.LocationCountry.CountryName : null, // include the country name
-                        PhoneNumber = o.Shipment != null && o.Shipment.Location != null && o.Shipment.Location.ApplicationUser != null ? o.Shipment.Location.ApplicationUser.PhoneNumber : null, // include the phone number
+                        Address = o.Shipment != null && o.Shipment.Location != null
+                            ? o.Shipment.Location.Address 
+                            : null, // include the address
+                        PostalCode = o.Shipment != null && o.Shipment.Location != null
+                            ? o.Shipment.Location.PostalCode 
+                            : null, // include the postal code
+                        Region = o.Shipment != null && o.Shipment.Location != null && o.Shipment.Location.LocationRegion != null
+                            ? o.Shipment.Location.LocationRegion.Region 
+                            : null, // include the region
+                        CountryName = o.Shipment != null && o.Shipment.Location != null && o.Shipment.Location.LocationRegion != null && o.Shipment.Location.LocationRegion.LocationCountry != null
+                            ? o.Shipment.Location.LocationRegion.LocationCountry.CountryName 
+                            : null, // include the country name
                     })
                     .ToListAsync();
 
@@ -67,28 +85,47 @@ public class OrderService : IOrderService
                         {
                             o.Id,
                             o.OrderNumber,
-                            o.OrderDate,
                             o.Status,
                             o.TotalFinalAmount,
                             o.TotalQuantity,
                             o.TotalAmount,
+                            o.OrderDate,
+                            o.PackedDate,
                             o.CancelledDate,
                             o.CompletedDate,
+                            ShipmentDate = o.Shipment != null ? o.Shipment.ShipmentDate : null, // include the shipment date
+                            ExpectedDate = o.Shipment != null ? o.Shipment.ExpectedDate : null, // include the expected date
+                            DelayedDateFrom = o.Shipment != null ? o.Shipment.DelayedDateFrom : null, // include the delayed date
+                            ArrivedDate = o.Shipment != null ? o.Shipment.ArrivedDate : null, // include the arrived date
                             o.ShipmentId,
                             o.PaymentId,
                             o.CouponUserListId,
                             CouponIsUsed = o.CouponUserList != null ? o.CouponUserList.IsUsed : false, // include if the coupon is used
                             CouponExpiryDate = o.CouponUserList != null ? o.CouponUserList.ExpiryDate : null, // include the expiry date of the coupon
-                            CouponCode = o.CouponUserList != null && o.CouponUserList.Coupon != null ? o.CouponUserList.Coupon.Code : null, // include the coupon code
-                            CouponDiscountAmount = o.CouponUserList != null && o.CouponUserList.Coupon != null ? o.CouponUserList.Coupon.DiscountAmount : 0, // include the discount from the coupon
-                            CouponDescription = o.CouponUserList != null && o.CouponUserList.Coupon != null ? o.CouponUserList.Coupon.Desription : null, // include the description from the coupon
+                            CouponCode = o.CouponUserList != null && o.CouponUserList.Coupon != null
+                                ? o.CouponUserList.Coupon.Code 
+                                : null, // include the coupon code
+                            CouponDiscountPercentage = o.CouponUserList != null && o.CouponUserList.Coupon != null
+                                ? o.CouponUserList.Coupon.DiscountPercentage 
+                                : 0, // include the discount from the coupon
+                            CouponDescription = o.CouponUserList != null && o.CouponUserList.Coupon != null
+                                ? o.CouponUserList.Coupon.Desription 
+                                : null, // include the description from the coupon
                             AccountOrCardNumber = o.Payment != null ? o.Payment.AccountOrCardNumber : null, // include the account or card number
                             TrackingNumber = o.Shipment != null ? o.Shipment.TrackingNumber : null, // include the tracking number
                             ShippingCost = o.Shipment != null ? o.Shipment.ShippingCost : 0, // include the shipping cost
-                            Address = o.Shipment != null && o.Shipment.Location != null ? o.Shipment.Location.Address : null, // include the address
-                            PostalCode = o.Shipment != null && o.Shipment.Location != null ? o.Shipment.Location.PostalCode : null, // include the postal code
-                            Region = o.Shipment != null && o.Shipment.Location != null && o.Shipment.Location.LocationRegion != null ? o.Shipment.Location.LocationRegion.Region : null, // include the region
-                            CountryName = o.Shipment != null && o.Shipment.Location != null && o.Shipment.Location.LocationRegion != null && o.Shipment.Location.LocationRegion.LocationCountry != null ? o.Shipment.Location.LocationRegion.LocationCountry.CountryName : null, // include the country name
+                            Address = o.Shipment != null && o.Shipment.Location != null
+                                ? o.Shipment.Location.Address 
+                                : null, // include the address
+                            PostalCode = o.Shipment != null && o.Shipment.Location != null
+                                ? o.Shipment.Location.PostalCode 
+                                : null, // include the postal code
+                            Region = o.Shipment != null && o.Shipment.Location != null && o.Shipment.Location.LocationRegion != null
+                                ? o.Shipment.Location.LocationRegion.Region 
+                                : null, // include the region
+                            CountryName = o.Shipment != null && o.Shipment.Location != null && o.Shipment.Location.LocationRegion != null && o.Shipment.Location.LocationRegion.LocationCountry != null
+                                ? o.Shipment.Location.LocationRegion.LocationCountry.CountryName 
+                                : null, // include the country name
                         })
                         .FirstOrDefaultAsync();
 
@@ -118,10 +155,10 @@ public class OrderService : IOrderService
 
     public async Task<IActionResult> UpdateOrder(int id, Order order, string userId)
     {
-        if (id != order.Id || string.IsNullOrEmpty(order.PaymentId.ToString()))
-        {
-            return new BadRequestObjectResult("Invalid Order data OR mismatch Payment ID.");
-        }
+        // if (id != order.Id)
+        // {
+        //     return new BadRequestObjectResult("Invalid Order data OR mismatch Payment ID.");
+        // }
 
         _context.Entry(order).State = EntityState.Modified;
         await _context.SaveChangesAsync();

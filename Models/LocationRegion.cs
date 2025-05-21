@@ -4,9 +4,10 @@ public class LocationRegion
 {
     [Key]
     public int Id { get; set; }
-    [Required]
-    public string? Region { get; set; } // City/Province/State
 
+    [Required]
+    [StringLength(100)]
+    public string? Region { get; set; } // City/Province/State
 
     public int CountryId { get; set; } // Foreign key to LocationCountry
     public LocationCountry? LocationCountry { get; set; } // Navigation property to LocationCountry

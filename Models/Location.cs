@@ -6,8 +6,12 @@ public class Location
 {
     [Key]
     public int Id { get; set; }
+
+    [StringLength(50, MinimumLength = 2)]
     public string? PostalCode { get; set; }
+
     [Required]
+    [StringLength(200, MinimumLength = 2)]
     public string? Address { get; set; }
 
     public int RegionId { get; set; } // Foreign key to LocationRegion

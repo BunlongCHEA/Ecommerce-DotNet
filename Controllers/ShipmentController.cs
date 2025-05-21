@@ -12,11 +12,11 @@ namespace EcommerceAPI.Controllers
     [Authorize]
     public class ShipmentController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IShipmentService _shipmentService;
 
-        public ShipmentController(ApplicationDbContext context)
+        public ShipmentController(IShipmentService shipmentService)
         {
-            _context = context;
+            _shipmentService = shipmentService;
         }
 
         // GET: api/shipment
@@ -35,24 +35,7 @@ namespace EcommerceAPI.Controllers
                 Console.WriteLine($"{claim.Type} : {claim.Value}");
             }
             
-            var shipments = await _context.Shipments
-                            .Include(s => s.ShipmentType) // Include related shipment type data
-                            .Include(s => s.Location) // Include related location data
-                            .Where(s => s.Location != null && s.Location.UserId == int.Parse(userId)) // Ensure the shipment belongs to the logged-in user
-                            .Select(s => new
-                            {
-                                s.Id,
-                                s.TrackingNumber,
-                                s.ShipmentDate,
-                                s.ExpectedDate,
-                                s.DelayedDateFrom,
-                                s.ArrivedDate,
-                                s.ShippingCost,
-                                ShipmentTypeId = s.ShipmentType != null ? s.ShipmentType.Id : 0,
-                                LocationId = s.Location != null ? s.Location.Id : 0,
-                            })
-                            .ToListAsync();
-            return Ok(shipments);
+            return await _shipmentService.GetShipments(userId);
         }
 
         // GET: api/shipment/{id}
@@ -66,29 +49,7 @@ namespace EcommerceAPI.Controllers
                 return Unauthorized("User not authenticated or valid.");
             }
 
-            var shipment = await _context.Shipments
-                            .Include(s => s.ShipmentType) // Include related shipment type data
-                            .Include(s => s.Location) // Include related location data
-                            .Where(s => s.Id == id && s.Location != null && s.Location.UserId == int.Parse(userId)) // Ensure the shipment belongs to the logged-in user
-                            .Select(s => new
-                            {
-                                s.Id,
-                                s.TrackingNumber,
-                                s.ShipmentDate,
-                                s.ExpectedDate,
-                                s.DelayedDateFrom,
-                                s.ArrivedDate,
-                                s.ShippingCost,
-                                ShipmentTypeId = s.ShipmentType != null ? s.ShipmentType.Id : 0,
-                                LocationId = s.Location != null ? s.Location.Id : 0,
-                            })
-                            .FirstOrDefaultAsync();
-
-            if (shipment == null)
-            {
-                return NotFound();
-            }
-            return Ok(shipment);
+            return await _shipmentService.GetShipment(id, userId);            
         }
 
         // POST: api/shipment
@@ -102,14 +63,7 @@ namespace EcommerceAPI.Controllers
                 return Unauthorized("User is not authenticated or valid.");
             }
 
-            if (shipment == null || string.IsNullOrEmpty(shipment.ShipmentTypeId.ToString()))
-            {
-                return BadRequest("Invalid Create Shipment data. Some fields cannot be null or missing.");
-            }
-
-            _context.Shipments.Add(shipment);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetShipment), new { id = shipment.Id }, shipment);
+            return await _shipmentService.CreateShipment(shipment, userId);
         }
 
         // PUT: api/shipment/{id}
@@ -122,20 +76,7 @@ namespace EcommerceAPI.Controllers
                 return Unauthorized("User is not authenticated or valid.");
             }
 
-            if (shipment == null || string.IsNullOrEmpty(shipment.ShipmentTypeId.ToString()))
-            {
-                return BadRequest("Invalid Shipment data OR mismatch Shipment Type ID.");
-            }
-
-            if (id != shipment.Id)
-            {
-                return BadRequest("ID mismatch in the request.");
-            }
-
-            _context.Entry(shipment).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            return await _shipmentService.UpdateShipment(id, shipment, userId);
         }
 
         // DELETE: api/shipment/{id}
@@ -148,16 +89,7 @@ namespace EcommerceAPI.Controllers
                 return Unauthorized("User is not authenticated or valid.");
             }
 
-            var shipment = await _context.Shipments.FindAsync(id);
-            if (shipment == null)
-            {
-                return NotFound();
-            }
-
-            _context.Shipments.Remove(shipment);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            return await _shipmentService.DeleteShipment(id, userId);
         }
     }
 }

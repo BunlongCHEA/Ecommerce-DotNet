@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using ECommerceAPI.Models;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
@@ -7,19 +8,36 @@ public class Order
 {
     [Key]
     public int Id { get; set; }
+
     [Required]
+    [StringLength(100)]
     public string? OrderNumber { get; set; } // Unique order number
+    
     [Required]
-    public DateTime? OrderDate { get; set; } // Date when the order was placed
+    public DateTimeOffset? OrderDate { get; set; } // Date when the order was placed
+
     [Required]
+    [StringLength(30)]
     public string? Status { get; set; } // e.g., "Pending", "Completed", "Cancelled"
+
+    [DataType(DataType.Currency)]
+    [Column(TypeName = "decimal(20,2)")]
     public Decimal? TotalFinalAmount { get; set; } // Amount after applying any discounts
+
     [Required]
+    [Range(0, int.MaxValue)]
     public int TotalQuantity { get; set; } // Total quantity of items in the order
+
     [Required]
+    [DataType(DataType.Currency)]
+    [Column(TypeName = "decimal(20,2)")]
     public decimal TotalAmount { get; set; } // Total amount of the order
-    public DateTime? CancelledDate { get; set; } // Date when the order was cancelled
-    public DateTime? CompletedDate { get; set; } // Date when the order was completed
+
+    public DateTimeOffset? CancelledDate { get; set; } // Date when the order was cancelled
+
+    public DateTimeOffset? CompletedDate { get; set; } // Date when the order was completed
+
+    public DateTimeOffset? PackedDate { get; set; } // Date when the order was packed
 
     public int ShipmentId { get; set; } // Foreign key to Shipment
     [JsonIgnore]

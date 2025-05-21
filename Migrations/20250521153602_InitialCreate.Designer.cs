@@ -12,15 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EcommerceAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250507085934_AddDurationValidityForCoupon")]
-    partial class AddDurationValidityForCoupon
+    [Migration("20250521153602_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.4")
+                .HasAnnotation("ProductVersion", "9.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -79,15 +79,18 @@ namespace EcommerceAPI.Migrations
 
                     b.Property<string>("FirstName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Gender")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.Property<string>("LastName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -114,7 +117,8 @@ namespace EcommerceAPI.Migrations
 
                     b.Property<string>("Role")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
@@ -147,9 +151,16 @@ namespace EcommerceAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.HasKey("Id");
 
@@ -165,13 +176,17 @@ namespace EcommerceAPI.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Code")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Desription")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal>("DiscountAmount")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<int>("DiscountPercentage")
+                        .HasColumnType("int");
 
                     b.Property<int>("DurationValidity")
                         .HasColumnType("int");
@@ -179,11 +194,15 @@ namespace EcommerceAPI.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<DateTime?>("StartDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTimeOffset?>("StartDate")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Type")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.HasKey("Id");
 
@@ -201,14 +220,14 @@ namespace EcommerceAPI.Migrations
                     b.Property<int>("CouponId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("ExpiryDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTimeOffset?>("ExpiryDate")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<bool>("IsUsed")
                         .HasColumnType("bit");
 
-                    b.Property<DateTime?>("UsedDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTimeOffset?>("UsedDate")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -232,10 +251,12 @@ namespace EcommerceAPI.Migrations
 
                     b.Property<string>("Address")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("PostalCode")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int>("RegionId")
                         .HasColumnType("int");
@@ -261,11 +282,14 @@ namespace EcommerceAPI.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("CountryCode")
-                        .HasColumnType("nvarchar(max)");
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.Property<string>("CountryName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
@@ -285,7 +309,8 @@ namespace EcommerceAPI.Migrations
 
                     b.Property<string>("Region")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
@@ -405,24 +430,25 @@ namespace EcommerceAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal?>("AmountAfterDiscount")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<DateTimeOffset?>("CancelledDate")
+                        .HasColumnType("datetimeoffset");
 
-                    b.Property<DateTime?>("CancelledDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTimeOffset?>("CompletedDate")
+                        .HasColumnType("datetimeoffset");
 
-                    b.Property<DateTime?>("CompletedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("CouponUserListId")
+                    b.Property<int?>("CouponUserListId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("OrderDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTimeOffset>("OrderDate")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("OrderNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTimeOffset?>("PackedDate")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<int>("PaymentId")
                         .HasColumnType("int");
@@ -432,10 +458,14 @@ namespace EcommerceAPI.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
 
                     b.Property<decimal>("TotalAmount")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(20,2)");
+
+                    b.Property<decimal?>("TotalFinalAmount")
+                        .HasColumnType("decimal(20,2)");
 
                     b.Property<int>("TotalQuantity")
                         .HasColumnType("int");
@@ -464,7 +494,7 @@ namespace EcommerceAPI.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(20,2)");
 
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
@@ -473,7 +503,7 @@ namespace EcommerceAPI.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("TotalPrice")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(20,2)");
 
                     b.HasKey("Id");
 
@@ -494,21 +524,24 @@ namespace EcommerceAPI.Migrations
 
                     b.Property<string>("AccountOrCardNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<decimal>("Balance")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(20,2)");
 
                     b.Property<string>("BankName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
-                    b.Property<DateTime>("CardExpireDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTimeOffset>("CardExpireDate")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("PaymentMethod")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -539,14 +572,16 @@ namespace EcommerceAPI.Migrations
 
                     b.Property<string>("ImageUrl")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(20,2)");
 
                     b.Property<int>("StoreId")
                         .HasColumnType("int");
@@ -575,30 +610,31 @@ namespace EcommerceAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime?>("ArrivedDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTimeOffset?>("ArrivedDate")
+                        .HasColumnType("datetimeoffset");
 
-                    b.Property<DateTime?>("DelayedDateFrom")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTimeOffset?>("DelayedDateFrom")
+                        .HasColumnType("datetimeoffset");
 
-                    b.Property<DateTime?>("ExpectedDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTimeOffset?>("ExpectedDate")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<int>("LocationId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("ShipmentDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTimeOffset?>("ShipmentDate")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<int>("ShipmentTypeId")
                         .HasColumnType("int");
 
                     b.Property<decimal>("ShippingCost")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(20,2)");
 
                     b.Property<string>("TrackingNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
@@ -618,7 +654,8 @@ namespace EcommerceAPI.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Type")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
 
@@ -634,13 +671,16 @@ namespace EcommerceAPI.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Latitude")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Longitude")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.HasKey("Id");
 
@@ -657,7 +697,8 @@ namespace EcommerceAPI.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.HasKey("Id");
 
@@ -768,9 +809,7 @@ namespace EcommerceAPI.Migrations
                 {
                     b.HasOne("CouponUserList", "CouponUserList")
                         .WithMany("Orders")
-                        .HasForeignKey("CouponUserListId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CouponUserListId");
 
                     b.HasOne("Payment", "Payment")
                         .WithMany("Orders")

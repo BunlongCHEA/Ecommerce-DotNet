@@ -8,21 +8,20 @@ using Microsoft.EntityFrameworkCore;
 namespace EcommerceAPI.Controllers
 {
     [ApiController]
-    [Route("api/admin/order")]
-    // Apply the "Admin" policy to the entire controller
+    [Route("api/admin/shipment")]
     [Authorize(Policy = "Admin")]
-    public class AdminOrderController : ControllerBase
+    public class AdminShipmentController : ControllerBase
     {
-        private readonly IOrderService _OrderService;
+        private readonly IShipmentService _shipmentService;
 
-        public AdminOrderController(IOrderService orderService)
+        public AdminShipmentController(IShipmentService shipmentService)
         {
-            _OrderService = orderService;
+            _shipmentService = shipmentService;
         }
 
-        // GET: api/admin/order
+        // GET: api/shipment
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Order>>> GetOrders()
+        public async Task<ActionResult<IEnumerable<Shipment>>> GetShipments()
         {
             // Find the logged-in userId
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -36,12 +35,12 @@ namespace EcommerceAPI.Controllers
                 Console.WriteLine($"{claim.Type} : {claim.Value}");
             }
             
-            return await _OrderService.GetOrders(userId);
+            return await _shipmentService.GetShipments(userId);
         }
 
-        // GET: api/admin/order/{id}
+        // GET: api/shipment/{id}
         [HttpGet("{id}")]
-        public async Task<ActionResult<Order>> GetOrder(int id)
+        public async Task<ActionResult<Shipment>> GetShipment(int id)
         {
             // Find the logged-in userId
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -50,49 +49,47 @@ namespace EcommerceAPI.Controllers
                 return Unauthorized("User not authenticated or valid.");
             }
 
-            return await _OrderService.GetOrder(id, userId);
+            return await _shipmentService.GetShipment(id, userId);            
         }
 
-        // POST: api/admin/order
+        // POST: api/shipment
         [HttpPost]
-        public async Task<ActionResult<Order>> CreateOrder(Order order)
+        public async Task<ActionResult<Shipment>> CreateShipment(Shipment shipment)
         {
             // Find the logged-in userId
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized("User not authenticated or valid.");
+                return Unauthorized("User is not authenticated or valid.");
             }
 
-            return await _OrderService.CreateOrder(order, userId);
+            return await _shipmentService.CreateShipment(shipment, userId);
         }
 
-        // PUT: api/admin/order/{id}
+        // PUT: api/shipment/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateOrder(int id, Order order)
+        public async Task<IActionResult> UpdateShipment(int id, Shipment shipment)
         {
-            // Find the logged-in userId
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized("User not authenticated or valid.");
+                return Unauthorized("User is not authenticated or valid.");
             }
 
-            return await _OrderService.UpdateOrder(id, order, userId);
+            return await _shipmentService.UpdateShipment(id, shipment, userId);
         }
 
-        // DELETE: api/admin/order/{id}
+        // DELETE: api/shipment/{id}
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteOrder(int id)
+        public async Task<IActionResult> DeleteShipment(int id)
         {
-            // Find the logged-in userId
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized("User not authenticated or valid.");
+                return Unauthorized("User is not authenticated or valid.");
             }
 
-            return await _OrderService.DeleteOrder(id, userId);
+            return await _shipmentService.DeleteShipment(id, userId);
         }
     }
 }

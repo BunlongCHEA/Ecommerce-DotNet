@@ -6,7 +6,9 @@ public class SubCategory
 {
     [Key]
     public int Id { get; set; }
+
     [Required]
+    [StringLength(200)]
     public string? Name { get; set; }
     
     //// The = null!; tells the compiler "trust me, I'll assign this before use" — safe if always set it in code or via EF. Navigation property to Category

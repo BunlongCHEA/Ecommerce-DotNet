@@ -19,8 +19,8 @@ public class CouponUserList
     public ApplicationUser? ApplicationUser { get; set; } // Navigation property to ApplicationUser
 
     public bool IsUsed { get; set; } // Indicates if the coupon has been used by the user
-    public DateTime? UsedDate { get; set; } // Date when the coupon was used
-    public DateTime? ExpiryDate { get; set; } // Expiry date of the coupon for the user
+    public DateTimeOffset? UsedDate { get; set; } // Date when the coupon was used
+    public DateTimeOffset? ExpiryDate { get; set; } // Expiry date of the coupon for the user
 
     public ICollection<Order>? Orders { get; set; } // Collection of Orders associated with the coupon for the user
 }

@@ -33,14 +33,15 @@ public class OrderItemService : IOrderItemService
                             Status = oi.Order != null ? oi.Order.Status : null,
                             ProductName = oi.Product != null ? oi.Product.Name : null,
                             ImageUrl = oi.Product != null ? oi.Product.ImageUrl : null,
-                            DiscountAmount = oi.Product != null && oi.Product.Coupon != null
-                                ? oi.Product.Coupon.DiscountAmount 
+                            ProductDiscountPercentage = oi.Product != null && oi.Product.Coupon != null
+                                ? oi.Product.Coupon.DiscountPercentage 
                                 : 0, // Include the discount from the coupon
-                            CouponDiscount =
+                            CouponDiscountPercentage =
                                 oi.Order != null && oi.Order.CouponUserList != null && oi.Order.CouponUserList.Coupon != null
-                                ? oi.Order.CouponUserList.Coupon.DiscountAmount
+                                ? oi.Order.CouponUserList.Coupon.DiscountPercentage
                                 : 0,
                             OrderDate = oi.Order != null ? oi.Order.OrderDate : (DateTime?)null,
+                            PackedDate = oi.Order != null ? oi.Order.PackedDate : (DateTime?)null,
                             CompletedDate = oi.Order != null ? oi.Order.CompletedDate : (DateTime?)null,
                             CancelledDate = oi.Order != null ? oi.Order.CancelledDate : (DateTime?)null,
                             ShipmentDate = oi.Order != null && oi.Order.Shipment != null
@@ -107,12 +108,15 @@ public class OrderItemService : IOrderItemService
                             Status = oi.Order != null ? oi.Order.Status : null,
                             ProductName = oi.Product != null ? oi.Product.Name : null,
                             ImageUrl = oi.Product != null ? oi.Product.ImageUrl : null,
-                            DiscountAmount = oi.Product != null && oi.Product.Coupon != null ? oi.Product.Coupon.DiscountAmount : 0, // Include the discount from the coupon
-                            CouponDiscount =
+                            ProductDiscountPercentage = oi.Product != null && oi.Product.Coupon != null
+                                ? oi.Product.Coupon.DiscountPercentage 
+                                : 0, // Include the discount from the coupon
+                            CouponDiscountPercentage =
                                 oi.Order != null && oi.Order.CouponUserList != null && oi.Order.CouponUserList.Coupon != null
-                                ? oi.Order.CouponUserList.Coupon.DiscountAmount
+                                ? oi.Order.CouponUserList.Coupon.DiscountPercentage
                                 : 0,
                             OrderDate = oi.Order != null ? oi.Order.OrderDate : (DateTime?)null,
+                            PackedDate = oi.Order != null ? oi.Order.PackedDate : (DateTime?)null,
                             CompletedDate = oi.Order != null ? oi.Order.CompletedDate : (DateTime?)null,
                             CancelledDate = oi.Order != null ? oi.Order.CancelledDate : (DateTime?)null,
                             ShipmentDate = oi.Order != null && oi.Order.Shipment != null

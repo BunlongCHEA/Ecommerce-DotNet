@@ -32,10 +32,10 @@ namespace EcommerceAPI.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Gender = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FirstName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    LastName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Gender = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    Role = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -62,7 +62,9 @@ namespace EcommerceAPI.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -75,12 +77,15 @@ namespace EcommerceAPI.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Code = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Type = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    DiscountAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Code = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: true),
+                    Type = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: true),
+                    DiscountPercentage = table.Column<int>(type: "int", nullable: false),
                     Desription = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    StartDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    DurationValidity = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -93,8 +98,8 @@ namespace EcommerceAPI.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    CountryName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CountryCode = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    CountryName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    CountryCode = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -107,7 +112,7 @@ namespace EcommerceAPI.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Type = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Type = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -120,9 +125,9 @@ namespace EcommerceAPI.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Latitude = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Longitude = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    Latitude = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Longitude = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -135,7 +140,7 @@ namespace EcommerceAPI.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -254,11 +259,11 @@ namespace EcommerceAPI.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    PaymentMethod = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    BankName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    AccountOrCardNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CardExpireDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Balance = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    PaymentMethod = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    BankName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    AccountOrCardNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    CardExpireDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    Balance = table.Column<decimal>(type: "decimal(20,2)", nullable: false),
                     UserId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -281,8 +286,8 @@ namespace EcommerceAPI.Migrations
                     CouponId = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<int>(type: "int", nullable: false),
                     IsUsed = table.Column<bool>(type: "bit", nullable: false),
-                    UsedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ExpiryDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    UsedDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    ExpiryDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -307,7 +312,7 @@ namespace EcommerceAPI.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Region = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Region = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     CountryId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -327,10 +332,10 @@ namespace EcommerceAPI.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Price = table.Column<decimal>(type: "decimal(20,2)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ImageUrl = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     CategoryId = table.Column<int>(type: "int", nullable: false),
                     SubCategoryId = table.Column<int>(type: "int", nullable: false),
                     CouponId = table.Column<int>(type: "int", nullable: true),
@@ -370,8 +375,8 @@ namespace EcommerceAPI.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    PostalCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Address = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PostalCode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Address = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     RegionId = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<int>(type: "int", nullable: false)
                 },
@@ -398,12 +403,12 @@ namespace EcommerceAPI.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    TrackingNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ShipmentDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ExpectedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    DelayedDateFrom = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ArrivedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ShippingCost = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    TrackingNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    ShipmentDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    ExpectedDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    DelayedDateFrom = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    ArrivedDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    ShippingCost = table.Column<decimal>(type: "decimal(20,2)", nullable: false),
                     ShipmentTypeId = table.Column<int>(type: "int", nullable: false),
                     LocationId = table.Column<int>(type: "int", nullable: false)
                 },
@@ -430,17 +435,18 @@ namespace EcommerceAPI.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    OrderNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    OrderDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    AmountAfterDiscount = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    OrderNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    OrderDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
+                    TotalFinalAmount = table.Column<decimal>(type: "decimal(20,2)", nullable: true),
                     TotalQuantity = table.Column<int>(type: "int", nullable: false),
-                    TotalAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    CancelledDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    CompletedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    TotalAmount = table.Column<decimal>(type: "decimal(20,2)", nullable: false),
+                    CancelledDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    CompletedDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    PackedDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     ShipmentId = table.Column<int>(type: "int", nullable: false),
                     PaymentId = table.Column<int>(type: "int", nullable: false),
-                    CouponUserListId = table.Column<int>(type: "int", nullable: false)
+                    CouponUserListId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -449,8 +455,7 @@ namespace EcommerceAPI.Migrations
                         name: "FK_Orders_CouponUserLists_CouponUserListId",
                         column: x => x.CouponUserListId,
                         principalTable: "CouponUserLists",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Orders_Payments_PaymentId",
                         column: x => x.PaymentId,
@@ -470,8 +475,8 @@ namespace EcommerceAPI.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Quantity = table.Column<int>(type: "int", nullable: false),
-                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    TotalPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Price = table.Column<decimal>(type: "decimal(20,2)", nullable: false),
+                    TotalPrice = table.Column<decimal>(type: "decimal(20,2)", nullable: false),
                     ProductId = table.Column<int>(type: "int", nullable: false),
                     OrderId = table.Column<int>(type: "int", nullable: false)
                 },

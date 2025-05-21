@@ -47,6 +47,7 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 // Add Services and its implementations
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IOrderItemService, OrderItemService>();
+builder.Services.AddScoped<IShipmentService, ShipmentService>();
 
 // Configure Role-based Authorization
 builder.Services.AddAuthorization(options =>
