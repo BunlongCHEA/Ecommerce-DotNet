@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
-public class Product
+public class Product : BaseEntity  // Inherit from BaseEntity
 {
     [Key]
     public int Id { get; set; }

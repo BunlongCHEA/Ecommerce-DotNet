@@ -19,26 +19,26 @@ namespace EcommerceAPI.Controllers
             _OrderItemService = orderItemService;
         }
 
-        // GET: api/admin/orderitem
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<OrderItem>>> GetOrderItems()
-        {
-            // Find the logged-in userId
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            Console.WriteLine($"User ID: {userId}");
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized("User not authenticated or valid.");
-            }
-            foreach (var claim in User.Claims)
-            {
-                Console.WriteLine($"{claim.Type} : {claim.Value}");
-            }
+        // GET: api/orderitem
+        // [HttpGet]
+        // public async Task<ActionResult<IEnumerable<OrderItem>>> GetOrderItems()
+        // {
+        //     // Find the logged-in userId
+        //     var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        //     Console.WriteLine($"User ID: {userId}");
+        //     if (string.IsNullOrEmpty(userId))
+        //     {
+        //         return Unauthorized("User not authenticated or valid.");
+        //     }
+        //     foreach (var claim in User.Claims)
+        //     {
+        //         Console.WriteLine($"{claim.Type} : {claim.Value}");
+        //     }
             
-            return await _OrderItemService.GetOrderItems(userId);
-        }
+        //     return await _OrderItemService.GetOrderItems(userId);
+        // }
 
-        // GET: api/admin/orderitem/{id}
+        // GET: api/orderitem/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<OrderItem>> GetOrderItem(int id)
         {
@@ -66,7 +66,7 @@ namespace EcommerceAPI.Controllers
             return await _OrderItemService.CreateOrderItem(orderItem, userId);
         }
 
-        // // PUT: api/admin/orderitem/{id}
+        // // PUT: api/orderitem/{id}
         // [HttpPut("{id}")]
         // public async Task<IActionResult> UpdateOrderItem(int id, OrderItem orderItem)
         // {
@@ -80,7 +80,7 @@ namespace EcommerceAPI.Controllers
         //     return await _OrderItemService.UpdateOrderItem(id, orderItem, userId);
         // }
 
-        // // DELETE: api/admin/orderitem/{id}
+        // // DELETE: api/orderitem/{id}
         // [HttpDelete("{id}")]
         // public async Task<IActionResult> DeleteOrderItem(int id)
         // {

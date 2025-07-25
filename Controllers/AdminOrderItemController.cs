@@ -22,8 +22,21 @@ namespace EcommerceAPI.Controllers
 
         // GET: api/admin/orderitem
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<OrderItem>>> GetOrderItems()
+        public async Task<ActionResult<IEnumerable<OrderItem>>> GetOrderItems(
+            [FromQuery] int pageNumber = 1, 
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string searchQuery = null, 
+            [FromQuery] string searchType = null,
+            [FromQuery] string[] statuses = null
+        )
         {
+            // Validate pageSize and set allowed values (10, 100, 200, 500)
+            pageSize = pageSize switch
+            {
+                10 or 20 or 50 or 100 => pageSize,
+                _ => 10 // Default to 10 if invalid
+            };
+
             // Find the logged-in userId
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             Console.WriteLine($"User ID: {userId}");
@@ -36,7 +49,7 @@ namespace EcommerceAPI.Controllers
                 Console.WriteLine($"{claim.Type} : {claim.Value}");
             }
             
-            return await _OrderItemService.GetOrderItems(userId);
+            return await _OrderItemService.GetOrderItems(userId, pageNumber, pageSize, searchQuery, searchType, statuses);
         }
 
         // GET: api/admin/orderitem/{id}

@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using ECommerceAPI.Models;
 
-public class ShipmentType
+public class ShipmentType : BaseEntity  // Inherit from BaseEntity
 {
     [Key]
     public int Id { get; set; }

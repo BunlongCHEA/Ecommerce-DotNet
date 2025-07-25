@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 using ECommerceAPI.Models;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
-public class Order
+public class Order : BaseEntity  // Inherit from BaseEntity
 {
     [Key]
     public int Id { get; set; }

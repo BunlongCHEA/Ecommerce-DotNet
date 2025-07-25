@@ -8,11 +8,13 @@ using ECommerceAPI.Models;
 using System.Net;
 using ECommerceAPI.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ECommerceAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class UserController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -58,6 +60,6 @@ namespace ECommerceAPI.Controllers
 
             return Ok(user);
         }
-        
+
     }
 }

@@ -1,4 +1,5 @@
 using ECommerceAPI.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,6 +7,7 @@ namespace EcommerceAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class StoreController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -28,7 +30,7 @@ namespace EcommerceAPI.Controllers
         {
             var store = await _context.Stores.FindAsync(id);
             // var store = await _context.Stores.Include(s => s.Products)
-                                            //   .FirstOrDefaultAsync(s => s.Id == id);
+            //   .FirstOrDefaultAsync(s => s.Id == id);
             if (store == null)
             {
                 return NotFound();
@@ -60,7 +62,7 @@ namespace EcommerceAPI.Controllers
             }
             _context.Entry(store).State = EntityState.Modified;
             await _context.SaveChangesAsync();
-            return NoContent();
+            return Content("Store updated successfully");
         }
 
         // DELETE: api/store/{id}

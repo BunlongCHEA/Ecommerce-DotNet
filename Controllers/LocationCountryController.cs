@@ -1,5 +1,6 @@
 using ECommerceAPI.Data;
 using ECommerceAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,6 +8,7 @@ namespace EcommerceAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class LocationCountryController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -61,7 +63,7 @@ namespace EcommerceAPI.Controllers
 
             _context.Entry(country).State = EntityState.Modified;
             await _context.SaveChangesAsync();
-            return NoContent();
+            return Content("Location Country updated successfully");
         }
 
         // DELETE: api/locationcountry/{id}

@@ -1,4 +1,5 @@
 using ECommerceAPI.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,6 +7,7 @@ namespace EcommerceAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class CouponController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -105,7 +107,7 @@ namespace EcommerceAPI.Controllers
 
             _context.Entry(coupon).State = EntityState.Modified;
             await _context.SaveChangesAsync();
-            return NoContent();
+            return Content("Coupon updated successfully");
         }
 
         // DELETE: api/coupon/{id}

@@ -7,6 +7,7 @@ namespace ECommerceAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class SubCategoryController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -17,7 +18,6 @@ namespace ECommerceAPI.Controllers
 
         // GET: api/subcategory
         [HttpGet]
-        [Authorize]
         public async Task<ActionResult<IEnumerable<SubCategory>>> GetSubCategories()
         {
             var subCategories = await _context.SubCategories.ToListAsync();
@@ -26,7 +26,6 @@ namespace ECommerceAPI.Controllers
 
         // GET: api/subcategory/{id}
         [HttpGet("{id}")]
-        [Authorize]
         public async Task<ActionResult<SubCategory>> GetSubCategory(int id)
         {
             var subCategory = await _context.SubCategories.FirstOrDefaultAsync(sc => sc.Id == id);
@@ -39,7 +38,6 @@ namespace ECommerceAPI.Controllers
 
         // POST: api/subcategory
         [HttpPost]
-        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<SubCategory>> CreateSubCategory(SubCategory subCategory)
         {
             if (subCategory == null || string.IsNullOrEmpty(subCategory.Name))
@@ -54,7 +52,6 @@ namespace ECommerceAPI.Controllers
 
         // PUT: api/subcategory/{id}
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateSubCategory(int id, SubCategory subCategory)
         {
             if (id != subCategory.Id || string.IsNullOrEmpty(subCategory.Name))
@@ -64,12 +61,11 @@ namespace ECommerceAPI.Controllers
 
             _context.Entry(subCategory).State = EntityState.Modified;
             await _context.SaveChangesAsync();
-            return NoContent();
+            return Content("Sub Category updated successfully");
         }
 
         // DELETE: api/subcategory/{id}
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteSubCategory(int id)
         {
             var subCategory = await _context.SubCategories.FindAsync(id);

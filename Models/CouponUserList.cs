@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 using ECommerceAPI.Models;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
-public class CouponUserList
+public class CouponUserList : BaseEntity  // Inherit from BaseEntity
 {
     [Key]
     public int Id { get; set; }

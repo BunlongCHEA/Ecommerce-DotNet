@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-public class LocationRegion
+public class LocationRegion : BaseEntity  // Inherit from BaseEntity
 {
     [Key]
     public int Id { get; set; }

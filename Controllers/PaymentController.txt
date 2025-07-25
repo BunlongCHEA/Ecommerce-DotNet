@@ -22,7 +22,7 @@ namespace ECommerceAPI.Controllers
 
         // GET: api/payment
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<PaymentDto>>> GetPayments()
+        public async Task<ActionResult<IEnumerable<Payment>>> GetPayments()
         {
             // Find the logged-in userId
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -39,15 +39,14 @@ namespace ECommerceAPI.Controllers
             // Return payments that belong to the logged-in user
             var payments = await _context.Payments
                             .Where(p => p.UserId == int.Parse(userId)) // Ensure the payment belongs to the logged-in user
-                            .Select(p => new PaymentDto
+                            .Select(p => new
                             {
-                                Id = p.Id,
-                                PaymentMethod = p.PaymentMethod,
-                                BankName = p.BankName,
-                                AccountOrCardNumber = p.AccountOrCardNumber,
-                                CardHolderName = p.CardHolderName,
-                                CardExpireDate = p.CardExpireDate,
-                                UserId = p.UserId
+                                p.Id,
+                                p.PaymentMethod,
+                                p.BankName,
+                                p.AccountOrCardNumber,
+                                p.CardExpireDate,
+                                p.UserId
                             })               
                             .ToListAsync();
             return Ok(payments);
@@ -55,7 +54,7 @@ namespace ECommerceAPI.Controllers
 
         // GET: api/payment/{id}
         [HttpGet("{id}")]
-        public async Task<ActionResult<PaymentDto>> GetPayment(int id)
+        public async Task<ActionResult<Payment>> GetPayment(int id)
         {
             // Find the logged-in userId
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -67,15 +66,14 @@ namespace ECommerceAPI.Controllers
             // Find the payment by id and ensure it belongs to the logged-in user
             var payment = await _context.Payments
                             .Where(p => p.Id == id && p.UserId == int.Parse(userId)) // Ensure the payment belongs to the logged-in user
-                            .Select(p => new PaymentDto
+                            .Select(p => new
                             {
-                                Id = p.Id,
-                                PaymentMethod = p.PaymentMethod,
-                                BankName = p.BankName,
-                                AccountOrCardNumber = p.AccountOrCardNumber,
-                                CardHolderName = p.CardHolderName,
-                                CardExpireDate = p.CardExpireDate,
-                                UserId = p.UserId
+                                p.Id,
+                                p.PaymentMethod,
+                                p.BankName,
+                                p.AccountOrCardNumber,
+                                p.CardExpireDate,
+                                p.UserId
                             })
                             .FirstOrDefaultAsync();
                             // .FirstOrDefaultAsync(p => p.Id == id && p.UserId == int.Parse(userId));

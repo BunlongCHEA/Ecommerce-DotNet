@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-public class Coupon
+public class Coupon : BaseEntity  // Inherit from BaseEntity
 {
     [Key]
     public int Id { get; set; }
@@ -24,10 +24,6 @@ public class Coupon
 
     [Range(0, int.MaxValue)]
     public int DurationValidity { get; set; } // Duration of validity in days
-
-    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
-
-    public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     public ICollection<Product>? Products { get; set; } // Navigation property to Products
     public ICollection<CouponUserList>? CouponUserLists { get; set; } // Navigation property to CouponUserLists

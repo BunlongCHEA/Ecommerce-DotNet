@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using ECommerceAPI.Data;
 using ECommerceAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +9,7 @@ namespace EcommerceAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class CouponUserListController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -49,7 +51,7 @@ namespace EcommerceAPI.Controllers
                 {
                     return NotFound($"CouponUserList with CouponId {couponId} and UserId {userId} not found.");
                 }
-                return Ok(couponUserListQuery); 
+                return Ok(couponUserListQuery);
             }
 
             // Find the logged-in userId
@@ -63,7 +65,7 @@ namespace EcommerceAPI.Controllers
             // {
             //     Console.WriteLine($"{claim.Type} : {claim.Value}");
             // }
-            
+
             var couponUserLists = await _context.CouponUserLists
                                     .Include(c => c.Coupon)
                                     .Include(c => c.ApplicationUser)
@@ -120,7 +122,7 @@ namespace EcommerceAPI.Controllers
                 {
                     return NotFound($"CouponUserList with CouponId {couponId} and UserId {userId} not found.");
                 }
-                return Ok(couponUserListQuery); 
+                return Ok(couponUserListQuery);
             }
 
             // Find the logged-in userId
@@ -199,7 +201,7 @@ namespace EcommerceAPI.Controllers
 
             _context.Entry(couponUserList).State = EntityState.Modified;
             await _context.SaveChangesAsync();
-            return NoContent();
+            return Content("Coupon User List updated successfully");
         }
 
         // DELETE: api/couponuserlist/{id}
@@ -212,7 +214,7 @@ namespace EcommerceAPI.Controllers
             {
                 return Unauthorized("User not authenticated or valid.");
             }
-            
+
             var couponUserList = await _context.CouponUserLists.FindAsync(id);
             if (couponUserList == null)
             {

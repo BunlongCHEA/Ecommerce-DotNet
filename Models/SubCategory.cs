@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
-public class SubCategory
+public class SubCategory : BaseEntity  // Inherit from BaseEntity
 {
     [Key]
     public int Id { get; set; }

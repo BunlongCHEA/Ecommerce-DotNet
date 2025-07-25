@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 // using EcommerceAPI.Models;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
-public class Shipment
+public class Shipment : BaseEntity  // Inherit from BaseEntity
 {
     [Key]
     public int Id { get; set; }
