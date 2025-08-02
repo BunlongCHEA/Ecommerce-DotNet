@@ -25,7 +25,8 @@ namespace ECommerceAPI.Data
         public DbSet<ShipmentType> ShipmentTypes { get; set; }
         public DbSet<Shipment> Shipments { get; set; }
         public DbSet<Payment> Payments { get; set; }
-
+        public DbSet<ChatRoom> ChatRooms { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
 
         // Add custom logic if needed to overrid SaveChanges & SaveChangesAsync
         private void UpdateAuditFields()
@@ -187,6 +188,76 @@ CancellationToken cancellationToken = default)
                 .HasOne(p => p.ApplicationUser)
                 .WithMany(u => u.Payments)
                 .HasForeignKey(p => p.UserId);
+
+            // Configure the ApplicationUser entity
+            modelBuilder.Entity<ApplicationUser>()
+                .HasOne(u => u.Store)
+                .WithMany(s => s.ApplicationUsers)
+                .HasForeignKey(u => u.StoreId);
+
+            // Configure the ChatRoom entity
+            modelBuilder.Entity<ChatRoom>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                // Configure Customer relationship
+                entity.HasOne(d => d.Customer)
+                    .WithMany(u => u.CustomerChatRooms)
+                    .HasForeignKey(d => d.CustomerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Configure Seller relationship
+                entity.HasOne(d => d.Seller)
+                    .WithMany(u => u.SellerChatRooms)
+                    .HasForeignKey(d => d.SellerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Configure Store relationship
+                entity.HasOne(d => d.Store)
+                    .WithMany(s => s.ChatRooms)
+                    .HasForeignKey(d => d.StoreId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Configure Messages relationship
+                entity.HasMany(d => d.Messages)
+                    .WithOne(m => m.ChatRoom)
+                    .HasForeignKey(m => m.ChatRoomId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Create unique index for customer-seller-store combination
+                // entity.HasIndex(e => new { e.CustomerId, e.SellerId, e.StoreId })
+                //     .IsUnique();
+            });
+
+            // Configure the ChatMessage entity
+            modelBuilder.Entity<ChatMessage>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                // Configure Sender relationship
+                entity.HasOne(d => d.Sender)
+                    .WithMany(u => u.SentMessages)
+                    .HasForeignKey(d => d.SenderId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Configure Receiver relationship
+                entity.HasOne(d => d.Receiver)
+                    .WithMany(u => u.ReceivedMessages)
+                    .HasForeignKey(d => d.ReceiverId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Configure ChatRoom relationship
+                entity.HasOne(d => d.ChatRoom)
+                    .WithMany(r => r.Messages)
+                    .HasForeignKey(d => d.ChatRoomId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Create indexes for performance
+                // entity.HasIndex(e => e.ChatRoomId);
+                // entity.HasIndex(e => new { e.ReceiverId, e.IsRead });
+                // entity.HasIndex(e => e.SenderId);
+                // entity.HasIndex(e => e.Timestamp);
+            });
         }
     }
 }

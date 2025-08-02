@@ -159,3 +159,8 @@ D:\ITStep\1_GitClone\EcommerceAPI\obj\Debug\net9.0\EcommerceAPI.genruntimeconfig
 D:\ITStep\1_GitClone\EcommerceAPI\obj\Debug\net9.0\ref\EcommerceAPI.dll
 D:\ITStep\1_GitClone\EcommerceAPI\bin\Debug\net9.0\Newtonsoft.Json.dll
 D:\ITStep\1_GitClone\EcommerceAPI\bin\Debug\net9.0\Stripe.net.dll
+D:\ITStep\1_GitClone\EcommerceAPI\obj\Debug\net9.0\rpswa.dswa.cache.json
+D:\ITStep\1_GitClone\EcommerceAPI\obj\Debug\net9.0\rjimswa.dswa.cache.json
+D:\ITStep\1_GitClone\EcommerceAPI\obj\Debug\net9.0\rjsmrazor.dswa.cache.json
+D:\ITStep\1_GitClone\EcommerceAPI\obj\Debug\net9.0\rjsmcshtml.dswa.cache.json
+D:\ITStep\1_GitClone\EcommerceAPI\bin\Debug\net9.0\System.Net.WebSockets.WebSocketProtocol.dll

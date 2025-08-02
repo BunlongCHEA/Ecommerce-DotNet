@@ -93,7 +93,13 @@ namespace ECommerceAPI.Controllers
             //     Expires = DateTimeOffset.UtcNow.AddDays(1) // Cookie valid for 1 day
             // });
 
-            return Ok(new { token, userId = user.Id, role = user.Role });
+            return Ok(new
+            {
+                token,
+                userId = user.Id,
+                role = user.Role,
+                storeId = user.StoreId
+            });
         }
 
         // POST: api/auth/forgot-password

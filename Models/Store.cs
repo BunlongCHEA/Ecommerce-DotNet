@@ -15,4 +15,6 @@ public class Store : BaseEntity  // Inherit from BaseEntity
     public string? Longitude { get; set; }
 
     public ICollection<Product>? Products { get; set; } // Navigation property to Products
+    public ICollection<ChatRoom>? ChatRooms { get; set; } // Navigation property to ChatRooms
+    public ICollection<ApplicationUser>? ApplicationUsers { get; set; } // Navigation property to ApplicationUsers
 }
