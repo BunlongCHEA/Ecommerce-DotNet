@@ -334,6 +334,44 @@ namespace EcommerceAPI.Migrations
                     b.ToTable("CouponUserLists");
                 });
 
+            modelBuilder.Entity("Event", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("EndDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTimeOffset>("StartDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Events");
+                });
+
             modelBuilder.Entity("Location", b =>
                 {
                     b.Property<int>("Id")
@@ -707,6 +745,9 @@ namespace EcommerceAPI.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("EventId")
+                        .HasColumnType("int");
+
                     b.Property<string>("ImageUrl")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -734,6 +775,8 @@ namespace EcommerceAPI.Migrations
                     b.HasIndex("CategoryId");
 
                     b.HasIndex("CouponId");
+
+                    b.HasIndex("EventId");
 
                     b.HasIndex("StoreId");
 
@@ -1099,6 +1142,10 @@ namespace EcommerceAPI.Migrations
                         .WithMany("Products")
                         .HasForeignKey("CouponId");
 
+                    b.HasOne("Event", "Event")
+                        .WithMany("Products")
+                        .HasForeignKey("EventId");
+
                     b.HasOne("Store", "Store")
                         .WithMany("Products")
                         .HasForeignKey("StoreId")
@@ -1114,6 +1161,8 @@ namespace EcommerceAPI.Migrations
                     b.Navigation("Category");
 
                     b.Navigation("Coupon");
+
+                    b.Navigation("Event");
 
                     b.Navigation("Store");
 
@@ -1176,6 +1225,11 @@ namespace EcommerceAPI.Migrations
             modelBuilder.Entity("CouponUserList", b =>
                 {
                     b.Navigation("Orders");
+                });
+
+            modelBuilder.Entity("Event", b =>
+                {
+                    b.Navigation("Products");
                 });
 
             modelBuilder.Entity("Location", b =>

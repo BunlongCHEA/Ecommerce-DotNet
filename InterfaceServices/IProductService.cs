@@ -9,7 +9,8 @@ public interface IProductService
         string categoryIds = "",
         string subCategoryIds = "",
         decimal? minPrice = null,
-        decimal? maxPrice = null
+        decimal? maxPrice = null,
+        int? eventId = null
     );
     Task<ActionResult<Product>> GetProduct(int id);
     Task<ActionResult<Product>> CreateProduct(Product product, string userId);

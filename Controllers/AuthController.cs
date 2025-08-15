@@ -16,12 +16,147 @@ namespace ECommerceAPI.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IConfiguration _configuration;
         private readonly IEmailSender _emailSender; // Assuming you have an email sender service
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(UserManager<ApplicationUser> userManager, IConfiguration configuration, IEmailSender emailSender)
+        public AuthController(
+            UserManager<ApplicationUser> userManager,
+            IConfiguration configuration,
+            IEmailSender emailSender,
+            ILogger<AuthController> logger)
         {
             _emailSender = emailSender;
             _userManager = userManager;
             _configuration = configuration;
+            _logger = logger;
+        }
+
+
+        // GET: api/auth
+        [HttpGet]
+        public async Task<IActionResult> GetUserProfile()
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User not authenticated" });
+                }
+
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found" });
+                }
+
+                var userProfile = new
+                {
+                    id = user.Id,
+                    userName = user.UserName,
+                    email = user.Email,
+                    firstName = user.FirstName,
+                    lastName = user.LastName,
+                    gender = user.Gender,
+                    role = user.Role,
+                    phoneNumber = user.PhoneNumber,
+                    storeId = user.StoreId
+                };
+
+                return Ok(userProfile);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting user profile");
+                return StatusCode(500, new { message = "Internal server error" });
+            }   
+        }
+
+        // PUT: api/auth/updateprofile
+        [HttpPut]
+        public async Task<IActionResult> UpdateUserProfile([FromBody] UpdateProfileDto model)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User not authenticated" });
+                }
+
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found" });
+                }
+
+                // Check if email is being changed and if it's already taken
+                if (!string.IsNullOrEmpty(model.Email) && model.Email != user.Email)
+                {
+                    var existingUser = await _userManager.FindByEmailAsync(model.Email);
+                    if (existingUser != null && existingUser.Id != user.Id)
+                    {
+                        return BadRequest(new { message = "Email is already taken by another user" });
+                    }
+                    user.Email = model.Email;
+                }
+
+                // Update phone number
+                if (!string.IsNullOrEmpty(model.PhoneNumber))
+                {
+                    user.PhoneNumber = model.PhoneNumber;
+                }
+
+                var result = await _userManager.UpdateAsync(user);
+                if (result.Succeeded)
+                {
+                    return Ok(new { message = "Profile updated successfully" });
+                }
+
+                return BadRequest(new { message = "Failed to update profile", errors = result.Errors });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating user profile");
+                return StatusCode(500, new { message = "Internal server error" });
+            }
+        }
+
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto model)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User not authenticated" });
+                }
+
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found" });
+                }
+
+                // Verify current password
+                if (!await _userManager.CheckPasswordAsync(user, model.CurrentPassword))
+                {
+                    return BadRequest(new { message = "Current password is incorrect" });
+                }
+
+                var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+                if (result.Succeeded)
+                {
+                    return Ok(new { message = "Password changed successfully" });
+                }
+
+                return BadRequest(new { message = "Failed to change password", errors = result.Errors });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error changing password");
+                return StatusCode(500, new { message = "Internal server error" });
+            }
         }
 
         // POST: api/auth/register
@@ -155,6 +290,11 @@ namespace ECommerceAPI.Controllers
             return BadRequest(result.Errors);
         }
         
+        private string? GetCurrentUserId()
+        {
+            return User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        }
+
         private string GenerateJwtToken(ApplicationUser user)
         {
             // Read JWT settings from appsettings.json
@@ -203,7 +343,7 @@ namespace ECommerceAPI.Controllers
                 expires: DateTime.Now.AddMinutes(jwtExpireMin), // Expiration
                 signingCredentials: credentials // Signing credentials (key + algorithm)
             );
-            
+
             // Converts the token object into the final string (Authorization: Bearer <token>)
             return new JwtSecurityTokenHandler().WriteToken(token);
         }

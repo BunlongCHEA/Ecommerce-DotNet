@@ -27,6 +27,7 @@ namespace ECommerceAPI.Data
         public DbSet<Payment> Payments { get; set; }
         public DbSet<ChatRoom> ChatRooms { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<Event> Events { get; set; }
 
         // Add custom logic if needed to overrid SaveChanges & SaveChangesAsync
         private void UpdateAuditFields()
@@ -114,6 +115,12 @@ CancellationToken cancellationToken = default)
                 .HasOne(p => p.Coupon)
                 .WithMany(c => c.Products)
                 .HasForeignKey(p => p.CouponId);
+
+            modelBuilder.Entity<Product>()
+                .HasOne(p => p.Event)
+                .WithMany(e => e.Products)
+                .HasForeignKey(p => p.EventId);
+                // .OnDelete(DeleteBehavior.SetNull); // Set to null if the event is deleted
 
             // Configure the CouponUserList entity
             modelBuilder.Entity<CouponUserList>()

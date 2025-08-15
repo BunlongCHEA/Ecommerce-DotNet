@@ -1,0 +1,63 @@
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+  REGISTRY: $CI_REGISTRY
+  REGISTRY_IMAGE: $CI_REGISTRY_IMAGE
+  KUBECONFIG: /tmp/kubeconfig
+
+stages:
+  - build
+  # - test
+  - deploy
+
+# Build and Push Docker Image
+build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - docker build -t $IMAGE_NAME:$CI_COMMIT_SHA -t $IMAGE_NAME:latest .
+    - docker push $IMAGE_NAME:$CI_COMMIT_SHA
+    - docker push $IMAGE_NAME:latest
+  only:
+    - main
+    - develop
+
+# Deploy to Kubernetes
+deploy_production:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  before_script:
+    - echo $KUBE_CONFIG | base64 -d > $KUBECONFIG
+    - kubectl config use-context do-sgp1-your-cluster-name
+  script:
+    # Update the image in the deployment
+    - kubectl set image deployment/aspnet-app aspnet-app=$IMAGE_NAME:$CI_COMMIT_SHA -n production
+    # Wait for rollout to complete
+    - kubectl rollout status deployment/aspnet-app -n production --timeout=300s
+    # Verify deployment
+    - kubectl get pods -n production -l app=aspnet-app
+  environment:
+    name: production
+    url: https://yourdomain.com
+  when: manual
+  only:
+    - main
+
+# Database Migration Job (optional)
+migrate_database:
+  stage: deploy
+  image: mcr.microsoft.com/dotnet/sdk:9.0
+  before_script:
+    - dotnet tool install --global dotnet-ef
+    - export PATH="$PATH:/root/.dotnet/tools"
+  script:
+    - dotnet ef database update --connection "$PRODUCTION_CONNECTION_STRING"
+  when: manual
+  only:
+    - main
+  environment:
+    name: production

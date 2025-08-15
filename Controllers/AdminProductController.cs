@@ -26,7 +26,8 @@ namespace EcommerceAPI.Controllers
             [FromQuery] string categoryIds = "",
             [FromQuery] string subCategoryIds = "",
             [FromQuery] decimal? minPrice = null,
-            [FromQuery] decimal? maxPrice = null
+            [FromQuery] decimal? maxPrice = null,
+            [FromQuery] int? eventId = null
         )
         {
             return await _productService.GetProducts(
@@ -36,7 +37,8 @@ namespace EcommerceAPI.Controllers
                 categoryIds,
                 subCategoryIds,
                 minPrice,
-                maxPrice
+                maxPrice,
+                eventId
             );
         }
 

@@ -19,7 +19,8 @@ public class ProductService : IProductService
         string categoryIds = "",
         string subCategoryIds = "",
         decimal? minPrice = null,
-        decimal? maxPrice = null
+        decimal? maxPrice = null,
+        int? eventId = null
     )
     {
         // Sample api request: /api/product?pageNumber=2&pageSize=100&searchQuery=shirt&categoryIds=1,3&minPrice=10&maxPrice=50
@@ -78,6 +79,11 @@ public class ProductService : IProductService
             query = query.Where(p => p.Price <= maxPrice.Value);
         }
 
+        if (eventId.HasValue)
+        {
+            query = query.Where(p => p.EventId == eventId.Value);
+        }
+
         // Get the total count of products for pagination from vue3
         var totalCount = await query.CountAsync();
 
@@ -96,6 +102,8 @@ public class ProductService : IProductService
                         p.SubCategoryId,
                         p.CouponId,
                         p.StoreId,
+                        p.EventId,
+                        EventName = p.Event != null ? p.Event.Name : "No Event", // Get the event name
                         CouponCode = p.Coupon != null ? p.Coupon.Code : "No Coupon", // Get the coupon code
                         DiscountPercentage = p.Coupon != null ? p.Coupon.DiscountPercentage : 0, // Get the discount percentage
                         StoreName = p.Store != null ? p.Store.Name : "Unknown", // Get the store name
@@ -135,6 +143,8 @@ public class ProductService : IProductService
                                         p.SubCategoryId,
                                         p.CouponId,
                                         p.StoreId,
+                                        p.EventId,
+                                        EventName = p.Event != null ? p.Event.Name : "No Event", // Get the event name
                                         CouponCode = p.Coupon != null ? p.Coupon.Code : "No Coupon", // Get the coupon code
                                         DiscountPercentage = p.Coupon != null ? p.Coupon.DiscountPercentage : 0, // Get the discount percentage
                                         StoreName = p.Store != null ? p.Store.Name : "Unknown", // Get the store name
