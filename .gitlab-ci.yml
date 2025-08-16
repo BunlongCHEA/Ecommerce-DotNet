@@ -1,30 +1,103 @@
+# .gitlab-ci.yml
 variables:
   DOCKER_DRIVER: overlay2
   DOCKER_TLS_CERTDIR: "/certs"
   REGISTRY: $CI_REGISTRY
-  REGISTRY_IMAGE: $CI_REGISTRY_IMAGE
+  IMAGE_NAME: $CI_REGISTRY_IMAGE
   KUBECONFIG: /tmp/kubeconfig
 
 stages:
   - build
-  # - test
+  - database
   - deploy
 
 # Build and Push Docker Image
 build:
   stage: build
-  image: docker:latest
+  image: docker:28.3.3
   services:
-    - docker:dind
+    - docker:28.3.3-dind
   before_script:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
+    # Update appsettings.json with production connection string
+    - sed -i 's|Server=server|Server=mssql-service,1433;Database=Ecommerce;User Id=sa;Password=YourStrong@Password123!;TrustServerCertificate=True;|g' appsettings.json
+    
+    # Verify the connection string was updated
+    - cat appsettings.json | grep "DefaultConnection"  
+
+    # . at then end: is used the current directory to look for the Dockerfile
     - docker build -t $IMAGE_NAME:$CI_COMMIT_SHA -t $IMAGE_NAME:latest .
     - docker push $IMAGE_NAME:$CI_COMMIT_SHA
     - docker push $IMAGE_NAME:latest
   only:
     - main
     - develop
+
+# Database Setup
+setup_database:
+  stage: database
+  image: mcr.microsoft.com/mssql-tools
+  before_script:
+    - echo $KUBE_CONFIG | base64 -d > $KUBECONFIG
+    - kubectl config use-context do-sgp1-your-cluster-name
+  script:
+    # Wait for SQL Server to be ready
+    - echo "Waiting for SQL Server to be ready..."
+    - kubectl wait --for=condition=ready pod -l app=mssql -n production --timeout=300s
+    
+    # Get SQL Server service endpoint
+    - MSSQL_HOST=$(kubectl get svc mssql-service -n production -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+    - echo "SQL Server host: $MSSQL_HOST"
+    
+    # Create database if not exists
+    - |
+      /opt/mssql-tools/bin/sqlcmd -S "$MSSQL_HOST,1433" -U sa -P "YourStrong@Password123!" -Q "
+      IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'Ecommerce')
+      BEGIN
+          CREATE DATABASE Ecommerce;
+          PRINT 'Database Ecommerce created successfully.';
+      END
+      ELSE
+      BEGIN
+          PRINT 'Database Ecommerce already exists.';
+      END"
+    
+    # Verify database creation
+    - /opt/mssql-tools/bin/sqlcmd -S "$MSSQL_HOST,1433" -U sa -P "YourStrong@Password123!" -Q "SELECT name FROM sys.databases WHERE name = 'Ecommerce';"
+  environment:
+    name: production
+  when: manual
+  only:
+    - main
+  needs: []
+
+# Database Migration with EF Core (Alternative approach)
+migrate_database:
+  stage: database
+  image: mcr.microsoft.com/dotnet/sdk:9.0
+  before_script:
+    - echo $KUBE_CONFIG | base64 -d > $KUBECONFIG
+    - kubectl config use-context do-sgp1-your-cluster-name
+    - dotnet tool install --global dotnet-ef
+    - export PATH="$PATH:/root/.dotnet/tools"
+  script:
+    # Get SQL Server external IP
+    - MSSQL_HOST=$(kubectl get svc mssql-service -n production -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+    - echo "Migrating to SQL Server at: $MSSQL_HOST"
+    
+    # Update connection string with actual host
+    - MIGRATION_CONNECTION_STRING="Server=$MSSQL_HOST,1433;Database=Ecommerce;User Id=sa;Password=YourStrong@Password123!;TrustServerCertificate=True;"
+    
+    # Run EF migrations
+    - dotnet ef database update --connection "$MIGRATION_CONNECTION_STRING"
+  when: manual
+  only:
+    - main
+  environment:
+    name: production
+  needs:
+    - setup_database
 
 # Deploy to Kubernetes
 deploy_production:
@@ -34,11 +107,16 @@ deploy_production:
     - echo $KUBE_CONFIG | base64 -d > $KUBECONFIG
     - kubectl config use-context do-sgp1-your-cluster-name
   script:
-    # Update the image in the deployment
-    - kubectl set image deployment/aspnet-app aspnet-app=$IMAGE_NAME:$CI_COMMIT_SHA -n production
-    # Wait for rollout to complete
-    - kubectl rollout status deployment/aspnet-app -n production --timeout=300s
-    # Verify deployment
+    # Update image tag in ArgoCD application manifest
+    - kubectl patch application aspnet-ecommerce -n argocd --type='merge' -p='{"spec":{"source":{"helm":{"parameters":[{"name":"image.tag","value":"'$CI_COMMIT_SHA'"}]}}}}'
+    
+    # Trigger ArgoCD sync (optional - ArgoCD can auto-sync)
+    - kubectl patch application aspnet-ecommerce -n argocd --type='merge' -p='{"operation":{"sync":{"revision":"HEAD"}}}'
+    
+    # Wait for sync to complete
+    - kubectl wait --for=condition=Synced application/aspnet-ecommerce -n argocd --timeout=300s
+    
+    # Verify deployment in production namespace
     - kubectl get pods -n production -l app=aspnet-app
   environment:
     name: production
@@ -46,18 +124,3 @@ deploy_production:
   when: manual
   only:
     - main
-
-# Database Migration Job (optional)
-migrate_database:
-  stage: deploy
-  image: mcr.microsoft.com/dotnet/sdk:9.0
-  before_script:
-    - dotnet tool install --global dotnet-ef
-    - export PATH="$PATH:/root/.dotnet/tools"
-  script:
-    - dotnet ef database update --connection "$PRODUCTION_CONNECTION_STRING"
-  when: manual
-  only:
-    - main
-  environment:
-    name: production

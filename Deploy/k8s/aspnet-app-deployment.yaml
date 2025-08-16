@@ -1,30 +1,4 @@
-# Namespace
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: production
----
-# ConfigMap for application settings
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: aspnet-config
-  namespace: production
-data:
-  ASPNETCORE_ENVIRONMENT: "Production"
-  ASPNETCORE_URLS: "http://+:8080"
----
-# Secret for database connection
-apiVersion: v1
-kind: Secret
-metadata:
-  name: aspnet-secrets
-  namespace: production
-type: Opaque
-stringData:
-  ConnectionStrings__DefaultConnection: "Server=DESKTOP-CQSN3MN\\SQLSERVERDEV2022;Database=Ecommerce;User Id=sa;Password=12345;TrustServerCertificate=True;"
----
-# Deployment for Production
+# ASP.NET Core 9 Application Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -44,9 +18,10 @@ spec:
     spec:
       containers:
       - name: aspnet-app
-        image: your-registry/your-app:latest
+        image: registry.gitlab.com/your-username/your-project:latest # Update with your registry
         ports:
         - containerPort: 8080
+          name: http
         env:
         - name: ASPNETCORE_ENVIRONMENT
           valueFrom:
@@ -76,41 +51,75 @@ spec:
             port: 8080
           initialDelaySeconds: 30
           periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
         livenessProbe:
           httpGet:
             path: /health
             port: 8080
           initialDelaySeconds: 30
           periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
 ---
-# Service for Production
+# ASP.NET Service
 apiVersion: v1
 kind: Service
 metadata:
   name: aspnet-service
   namespace: production
+  labels:
+    app: aspnet-app
 spec:
+  type: LoadBalancer
   selector:
     app: aspnet-app
   ports:
   - port: 80
     targetPort: 8080
-  type: ClusterIP
+    protocol: TCP
+    name: http
+
 ---
-# Ingress for Production
+# ASP.NET ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aspnet-config
+  namespace: production
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ASPNETCORE_URLS: "http://+:8080"
+
+---
+# ASP.NET Secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aspnet-secrets
+  namespace: production
+type: Opaque
+data:
+  ConnectionStrings__DefaultConnection: U2VydmVyPW1zc3FsLXNlcnZpY2UsMTQzMztEYXRhYmFzZT1FY29tbWVyY2U7VXNlciBJZD1zYTtQYXNzd29yZD1Zb3VyU3Ryb25nQFBhc3N3b3JkMTIzITtUcnVzdFNlcnZlckNlcnRpZmljYXRlPVRydWU7
+  # Base64 encoded: Server=mssql-service,1433;Database=Ecommerce;User Id=sa;Password=YourStrong@Password123!;TrustServerCertificate=True;
+
+---
+# Ingress for external access (optional)
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: aspnet-ingress
   namespace: production
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   tls:
   - hosts:
     - yourdomain.com
-    secretName: production-tls
+    secretName: aspnet-tls
   rules:
   - host: yourdomain.com
     http:

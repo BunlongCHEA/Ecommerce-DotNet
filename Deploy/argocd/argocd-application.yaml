@@ -1,0 +1,45 @@
+# ArgoCD Application for E-commerce Stack
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aspnet-ecommerce
+  namespace: argocd
+  labels:
+    app: aspnet-ecommerce
+spec:
+  project: default
+  
+  # Source configuration
+  source:
+    repoURL: https://gitlab.com/your-username/your-project.git
+    targetRevision: main
+    path: Deploy/k8s
+    
+  # Destination cluster and namespace
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: production
+    
+  # Sync policy
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+    - CreateNamespace=true
+    - PrunePropagationPolicy=foreground
+    - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+        
+  # Health check configuration
+  ignoreDifferences:
+  - group: apps
+    kind: Deployment
+    jsonPointers:
+    - /spec/replicas

@@ -1,0 +1,107 @@
+# SQL Server 2022 Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mssql
+  namespace: production
+  labels:
+    app: mssql
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mssql
+  template:
+    metadata:
+      labels:
+        app: mssql
+    spec:
+      containers:
+      - name: mssql
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        ports:
+        - containerPort: 1433
+          name: mssql
+        env:
+        - name: ACCEPT_EULA
+          value: "Y"
+        - name: SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mssql-secrets
+              key: SA_PASSWORD
+        - name: MSSQL_PID
+          value: "Express"
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "500m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        volumeMounts:
+        - name: mssql-persistent-storage
+          mountPath: /var/opt/mssql
+        readinessProbe:
+          tcpSocket:
+            port: 1433
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: 1433
+          initialDelaySeconds: 30
+          periodSeconds: 30
+      volumes:
+      - name: mssql-persistent-storage
+        persistentVolumeClaim:
+          claimName: mssql-pvc
+
+---
+# SQL Server Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mssql-service
+  namespace: production
+  labels:
+    app: mssql
+spec:
+  type: LoadBalancer
+  selector:
+    app: mssql
+  ports:
+  - port: 1433
+    targetPort: 1433
+    protocol: TCP
+    name: mssql
+
+---
+# SQL Server Persistent Volume Claim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mssql-pvc
+  namespace: production
+  labels:
+    app: mssql
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: standard-rwo
+
+---
+# SQL Server Secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mssql-secrets
+  namespace: production
+type: Opaque
+data:
+  SA_PASSWORD: WW91clN0cm9uZ0BQYXNzd29yZDEyMyE= # Base64 encoded: YourStrong@Password123!
