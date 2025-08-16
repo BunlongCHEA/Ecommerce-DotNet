@@ -93,7 +93,7 @@ spec:
   resources:
     requests:
       storage: 50Gi
-  storageClassName: standard-rwo
+  storageClassName: standard-rwo # For GKE, use 'standard-rwo' or your specific storage class
 
 ---
 # SQL Server Secrets
