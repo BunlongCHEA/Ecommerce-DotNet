@@ -1,4 +1,4 @@
-# SQL Server 2022 Deployment
+# SQL Server 2022 Deployment - Init Container Fix
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,6 +18,21 @@ spec:
       labels:
         app: mssql
     spec:
+      # Init container to fix permissions
+      initContainers:
+      - name: volume-permissions
+        image: busybox:1.35
+        command: ['sh', '-c']
+        args:
+          - |
+            chown -R 10001:0 /var/opt/mssql
+            chmod -R 755 /var/opt/mssql
+            ls -la /var/opt/mssql
+        securityContext:
+          runAsUser: 0  # Run as root to change permissions
+        volumeMounts:
+        - name: mssql-persistent-storage
+          mountPath: /var/opt/mssql
       containers:
       - name: mssql
         image: mcr.microsoft.com/mssql/server:2022-latest
@@ -34,9 +49,6 @@ spec:
               key: SA_PASSWORD
         - name: MSSQL_PID
           value: "Express"
-        # Add user/group settings
-        - name: MSSQL_USER
-          value: "10001"
         resources:
           requests:
             memory: "2Gi"
@@ -44,23 +56,18 @@ spec:
           limits:
             memory: "4Gi"
             cpu: "2000m"
-        # Fix container security context
-        securityContext:
-          runAsUser: 10001
-          runAsGroup: 0
-          allowPrivilegeEscalation: false
         volumeMounts:
         - name: mssql-persistent-storage
           mountPath: /var/opt/mssql
         readinessProbe:
           tcpSocket:
             port: 1433
-          initialDelaySeconds: 15
+          initialDelaySeconds: 30
           periodSeconds: 10
         livenessProbe:
           tcpSocket:
             port: 1433
-          initialDelaySeconds: 30
+          initialDelaySeconds: 60
           periodSeconds: 30
       volumes:
       - name: mssql-persistent-storage
@@ -101,7 +108,7 @@ spec:
   resources:
     requests:
       storage: 50Gi
-  storageClassName: standard-rwo # For GKE, use 'standard-rwo' or your specific storage class
+  storageClassName: standard-rwo
 
 ---
 # SQL Server Secrets
