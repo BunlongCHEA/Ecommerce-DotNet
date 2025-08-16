@@ -34,6 +34,9 @@ spec:
               key: SA_PASSWORD
         - name: MSSQL_PID
           value: "Express"
+        # Add user/group settings
+        - name: MSSQL_USER
+          value: "10001"
         resources:
           requests:
             memory: "2Gi"
@@ -41,6 +44,11 @@ spec:
           limits:
             memory: "4Gi"
             cpu: "2000m"
+        # Fix container security context
+        securityContext:
+          runAsUser: 10001
+          runAsGroup: 0
+          allowPrivilegeEscalation: false
         volumeMounts:
         - name: mssql-persistent-storage
           mountPath: /var/opt/mssql
