@@ -6,10 +6,12 @@ variables:
   KUBECONTEXT: "gke_theta-moment-469209-j0_asia-southeast1_autopilot-cluster-1"
   KUBE_NAMESPACE: "production"
   DOMAIN: "ecommerce.bunlong.site"
+  MSSQL_PASSWORD: "YourStrong@Password123!"
+  MSSQL_DB: "Ecommerce"
 
 stages:
   - build
-  # - database
+  - database
   # - deploy
 
 # Build and Push Docker Image
@@ -35,88 +37,110 @@ build:
     - main
     - develop
 
-# # Database Setup
-# setup_database:
-#   stage: database
-#   image: mcr.microsoft.com/mssql-tools
-#   before_script:
-#     # # Install kubectl
-#     # - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-#     # - chmod +x kubectl
-#     # - mv kubectl /usr/local/bin/
-
-#     # # Verify connection
-#     # - kubectl cluster-info
-#     # - kubectl get nodes
-
-#     - echo $KUBE_CONFIG | base64 -d > $KUBECONFIG
-#     - kubectl config use-context $KUBECONTEXT
-#   script:
-#     # Wait for SQL Server to be ready
-#     - echo "Waiting for SQL Server to be ready..."
-#     - kubectl wait --for=condition=ready pod -l app=mssql -n production --timeout=300s
+# Database Setup using kubectl exec
+setup_database:
+  stage: database
+  image: google/cloud-sdk:alpine
+  before_script:
+    - echo $KUBE_CONFIG | base64 -d > $KUBECONFIG
+    - kubectl config use-context $KUBECONTEXT
+    - kubectl cluster-info
+  script:
+    # Wait for SQL Server to be ready
+    - echo "Waiting for SQL Server to be ready..."
+    - kubectl wait --for=condition=ready pod -l app=mssql -n production --timeout=300s
     
-#     # Get SQL Server service endpoint
-#     - MSSQL_HOST=$(kubectl get svc mssql-service -n production -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-#     - echo "SQL Server host: $MSSQL_HOST"
-    
-#     # Create database if not exists
-#     - |
-#       /opt/mssql-tools/bin/sqlcmd -S "$MSSQL_HOST,1433" -U sa -P "YourStrong@Password123!" -Q "
-#       IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'Ecommerce')
-#       BEGIN
-#           CREATE DATABASE Ecommerce;
-#           PRINT 'Database Ecommerce created successfully.';
-#       END
-#       ELSE
-#       BEGIN
-#           PRINT 'Database Ecommerce already exists.';
-#       END"
-    
-#     # Verify database creation
-#     - /opt/mssql-tools/bin/sqlcmd -S "$MSSQL_HOST,1433" -U sa -P "YourStrong@Password123!" -Q "SELECT name FROM sys.databases WHERE name = 'Ecommerce';"
-#   environment:
-#     name: $KUBE_NAMESPACE
-#   when: manual
-#   only:
-#     - main
-#   needs: []
+    # Get the SQL Server pod name
+    - MSSQL_POD=$(kubectl get pods -l app=mssql -n production -o jsonpath='{.items[0].metadata.name}')
+    - echo "SQL Server pod: $MSSQL_POD"
 
-# # Database Migration with EF Core (Alternative approach)
-# migrate_database:
-#   stage: database
-#   image: mcr.microsoft.com/dotnet/sdk:9.0
-#   before_script:
-#     # # Install kubectl
-#     # - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-#     # - chmod +x kubectl
-#     # - mv kubectl /usr/local/bin/
-
-#     # # Verify connection
-#     # - kubectl cluster-info
-#     # - kubectl get nodes
-
-#     - echo $KUBE_CONFIG | base64 -d > $KUBECONFIG
-#     - kubectl config use-context $KUBECONTEXT
-#     - dotnet tool install --global dotnet-ef
-#     - export PATH="$PATH:/root/.dotnet/tools"
-#   script:
-#     # Get SQL Server external IP
-#     - MSSQL_HOST=$(kubectl get svc mssql-service -n production -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-#     - echo "Migrating to SQL Server at: $MSSQL_HOST"
+    # Test connection first (using the correct sqlcmd path for SQL Server 2022)
+    - kubectl exec $MSSQL_POD -n $KUBE_NAMESPACE -- /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_PASSWORD" -Q "SELECT @@VERSION" -C
     
-#     # Update connection string with actual host
-#     - MIGRATION_CONNECTION_STRING="Server=$MSSQL_HOST,1433;Database=Ecommerce;User Id=sa;Password=YourStrong@Password123!;TrustServerCertificate=True;"
+    # Create database if not exists
+    - |
+      kubectl exec $MSSQL_POD -n production -- /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_PASSWORD" -C -Q "
+      IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = '$MSSQL_DB')
+      BEGIN
+          CREATE DATABASE [$MSSQL_DB];
+          PRINT 'Database $MSSQL_DB created successfully.';
+      END
+      ELSE
+      BEGIN
+          PRINT 'Database $MSSQL_DB already exists.';
+      END"
     
-#     # Run EF migrations
-#     - dotnet ef database update --connection "$MIGRATION_CONNECTION_STRING"
-#   when: manual
-#   only:
-#     - main
-#   environment:
-#     name: $KUBE_NAMESPACE
-#   needs:
-#     - setup_database
+    # Verify database creation
+    - kubectl exec $MSSQL_POD -n production -- /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_PASSWORD" -Q "SELECT name FROM sys.databases WHERE name = '$MSSQL_DB';" -C
+  environment:
+    name: $KUBE_NAMESPACE
+  when: manual
+  only:
+    - main
+  needs: []
+
+# Database Migration with EF Core
+migrate_database:
+  stage: database
+  image: google/cloud-sdk:alpine
+  before_script:
+    - echo $KUBE_CONFIG | base64 -d > $KUBECONFIG
+    - kubectl config use-context $KUBECONTEXT
+    - kubectl cluster-info
+    
+    # Install .NET SDK in Alpine
+    - apk add --no-cache wget
+    - wget https://dot.net/v1/dotnet-install.sh
+    - chmod +x dotnet-install.sh
+    - ./dotnet-install.sh --channel 9.0 --install-dir /usr/share/dotnet
+    - ln -s /usr/share/dotnet/dotnet /usr/local/bin/dotnet
+    
+    # Install EF Core tools
+    - dotnet tool install --global dotnet-ef
+    - export PATH="$PATH:/root/.dotnet/tools"
+  script:
+    # Wait for SQL Server to be ready
+    - echo "Waiting for SQL Server to be ready..."
+    - kubectl wait --for=condition=ready pod -l app=mssql -n $KUBE_NAMESPACE --timeout=300s
+    
+    # Use port-forward to connect to SQL Server securely
+    - echo "Setting up port-forward to SQL Server..."
+    - kubectl port-forward svc/mssql-service 1433:1433 -n $KUBE_NAMESPACE &
+    - PORT_FORWARD_PID=$!
+    - sleep 10  # Wait for port-forward to establish
+    
+    # Build connection string for localhost (via port-forward)
+    - MIGRATION_CONNECTION_STRING="Server=localhost,1433;Database=$MSSQL_DB;User Id=sa;Password=$MSSQL_PASSWORD;TrustServerCertificate=True;Encrypt=True;"
+    - echo "Using connection string (password hidden): Server=localhost,1433;Database=$MSSQL_DB;User Id=sa;Password=***;TrustServerCertificate=True;Encrypt=True;"
+    
+    # Test connection
+    - echo "Testing database connection..."
+    - timeout 30 sh -c 'until nc -z localhost 1433; do sleep 2; done' || echo "Warning: Connection test failed, proceeding anyway"
+    
+    # Copy project files if needed (assuming they're in the working directory)
+    - echo "Current directory contents:"
+    - ls -la
+    
+    # List available migrations
+    - echo "Available migrations:"
+    - dotnet ef migrations list --connection "$MIGRATION_CONNECTION_STRING" || echo "No migrations found or connection failed"
+    
+    # Run EF migrations
+    - echo "Running EF Core migrations..."
+    - dotnet ef database update --connection "$MIGRATION_CONNECTION_STRING" --verbose
+    
+    # Clean up port-forward
+    - kill $PORT_FORWARD_PID || true
+    
+    # Verify migration success
+    - echo "Migration completed successfully!"
+  when: manual
+  only:
+    - main
+  environment:
+    name: $KUBE_NAMESPACE
+  needs:
+    - setup_database
 
 # # Deploy to Kubernetes
 # deploy_production:
