@@ -25,9 +25,9 @@ build:
   script:
     # Update appsettings.json with production connection string
     - sed -i 's|Server=server|Server=mssql-service,1433;Database=Ecommerce;User Id=sa;Password=YourStrong@Password123!;TrustServerCertificate=True;|g' appsettings.json
-    
+
     # Verify the connection string was updated
-    - cat appsettings.json | grep "DefaultConnection"  
+    - cat appsettings.json | grep "DefaultConnection"
 
     # . at then end: is used the current directory to look for the Dockerfile
     - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA -t $CI_REGISTRY_IMAGE:latest .
@@ -48,18 +48,18 @@ setup_database:
   script:
     # Wait for SQL Server to be ready
     - echo "Waiting for SQL Server to be ready..."
-    - kubectl wait --for=condition=ready pod -l app=mssql -n production --timeout=300s
-    
+    - kubectl wait --for=condition=ready pod -l app=mssql -n $KUBE_NAMESPACE --timeout=300s
+
     # Get the SQL Server pod name
-    - MSSQL_POD=$(kubectl get pods -l app=mssql -n production -o jsonpath='{.items[0].metadata.name}')
-    - echo "SQL Server pod: $MSSQL_POD"
+    - MSSQL_POD=$(kubectl get pods -l app=mssql -n $KUBE_NAMESPACE -o jsonpath='{.items[0].metadata.name}')
+    - echo "SQL Server pod:" $MSSQL_POD
 
     # Test connection first (using the correct sqlcmd path for SQL Server 2022)
     - kubectl exec $MSSQL_POD -n $KUBE_NAMESPACE -- /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_PASSWORD" -Q "SELECT @@VERSION" -C
     
     # Create database if not exists
     - |
-      kubectl exec $MSSQL_POD -n production -- /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_PASSWORD" -C -Q "
+      kubectl exec $MSSQL_POD -n $KUBE_NAMESPACE -- /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_PASSWORD" -C -Q "
       IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = '$MSSQL_DB')
       BEGIN
           CREATE DATABASE [$MSSQL_DB];
@@ -71,7 +71,7 @@ setup_database:
       END"
     
     # Verify database creation
-    - kubectl exec $MSSQL_POD -n production -- /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_PASSWORD" -Q "SELECT name FROM sys.databases WHERE name = '$MSSQL_DB';" -C
+    - kubectl exec $MSSQL_POD -n $KUBE_NAMESPACE -- /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_PASSWORD" -Q "SELECT name FROM sys.databases WHERE name = '$MSSQL_DB';" -C
   environment:
     name: $KUBE_NAMESPACE
   when: manual
@@ -87,52 +87,15 @@ migrate_database:
     - echo $KUBE_CONFIG | base64 -d > $KUBECONFIG
     - kubectl config use-context $KUBECONTEXT
     - kubectl cluster-info
-    
-    # Install .NET SDK in Alpine
-    - apk add --no-cache wget
-    - wget https://dot.net/v1/dotnet-install.sh
-    - chmod +x dotnet-install.sh
-    - ./dotnet-install.sh --channel 9.0 --install-dir /usr/share/dotnet
-    - ln -s /usr/share/dotnet/dotnet /usr/local/bin/dotnet
-    
-    # Install EF Core tools
-    - dotnet tool install --global dotnet-ef
-    - export PATH="$PATH:/root/.dotnet/tools"
   script:
-    # Wait for SQL Server to be ready
-    - echo "Waiting for SQL Server to be ready..."
+    - echo "Waiting for services to be ready..."
     - kubectl wait --for=condition=ready pod -l app=mssql -n $KUBE_NAMESPACE --timeout=300s
-    
-    # Use port-forward to connect to SQL Server securely
-    - echo "Setting up port-forward to SQL Server..."
-    - kubectl port-forward svc/mssql-service 1433:1433 -n $KUBE_NAMESPACE &
-    - PORT_FORWARD_PID=$!
-    - sleep 10  # Wait for port-forward to establish
-    
-    # Build connection string for localhost (via port-forward)
-    - MIGRATION_CONNECTION_STRING="Server=localhost,1433;Database=$MSSQL_DB;User Id=sa;Password=$MSSQL_PASSWORD;TrustServerCertificate=True;Encrypt=True;"
-    - echo "Using connection string (password hidden): Server=localhost,1433;Database=$MSSQL_DB;User Id=sa;Password=***;TrustServerCertificate=True;Encrypt=True;"
-    
-    # Test connection
-    - echo "Testing database connection..."
-    - timeout 30 sh -c 'until nc -z localhost 1433; do sleep 2; done' || echo "Warning: Connection test failed, proceeding anyway"
-    
-    # Copy project files if needed (assuming they're in the working directory)
-    - echo "Current directory contents:"
-    - ls -la
-    
-    # List available migrations
-    - echo "Available migrations:"
-    - dotnet ef migrations list --connection "$MIGRATION_CONNECTION_STRING" || echo "No migrations found or connection failed"
-    
-    # Run EF migrations
+    - kubectl wait --for=condition=ready pod -l app=aspnet-app -n $KUBE_NAMESPACE --timeout=300s
+    - ASPNET_POD=$(kubectl get pods -l app=aspnet-app -n $KUBE_NAMESPACE -o jsonpath='{.items[0].metadata.name}')
+    - echo "Found ASP.NET pod"
+    - echo $ASPNET_POD
     - echo "Running EF Core migrations..."
-    - dotnet ef database update --connection "$MIGRATION_CONNECTION_STRING" --verbose
-    
-    # Clean up port-forward
-    - kill $PORT_FORWARD_PID || true
-    
-    # Verify migration success
+    - kubectl exec $ASPNET_POD -n $KUBE_NAMESPACE -- dotnet ef database update --connection "Server=mssql-service,1433;Database=Ecommerce;User Id=sa;Password=$MSSQL_PASSWORD;TrustServerCertificate=True;Encrypt=True;" --verbose
     - echo "Migration completed successfully!"
   when: manual
   only:
@@ -159,17 +122,17 @@ migrate_database:
 #     # Wait for sync to complete
 #     - kubectl wait --for=condition=Synced application/aspnet-ecommerce -n argocd --timeout=300s
     
-#     # Verify deployment in production namespace
-#     - kubectl get pods -n production -l app=aspnet-app
+#     # Verify deployment in $KUBE_NAMESPACE namespace
+#     - kubectl get pods -n $KUBE_NAMESPACE -l app=aspnet-app
 
 #     # Check TLS certificate status
-#     - kubectl get certificate -n production
-#     - kubectl describe certificate aspnet-tls-secret -n production
+#     - kubectl get certificate -n $KUBE_NAMESPACE
+#     - kubectl describe certificate aspnet-tls-secret -n $KUBE_NAMESPACE
 
 #     # Display service URLs
 #     - echo "📱 API Base URL: https://$DOMAIN"
 #     - echo "📖 Swagger UI: https://$DOMAIN/swagger"
-#     - echo "🔒 TLS Certificate: $(kubectl get certificate aspnet-tls-secret -n production -o jsonpath='{.status.conditions[0].status}')"
+#     - echo "🔒 TLS Certificate: $(kubectl get certificate aspnet-tls-secret -n $KUBE_NAMESPACE -o jsonpath='{.status.conditions[0].status}')"
 #   environment:
 #     name: $KUBE_NAMESPACE
 #     url: https://$DOMAIN
