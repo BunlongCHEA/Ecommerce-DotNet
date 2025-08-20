@@ -2,14 +2,15 @@
 variables:
   DOCKER_DRIVER: overlay2
   DOCKER_TLS_CERTDIR: "/certs"
-  REGISTRY: $CI_REGISTRY
-  IMAGE_NAME: $CI_REGISTRY_IMAGE
   KUBECONFIG: /tmp/kubeconfig
+  KUBECONTEXT: "gke_theta-moment-469209-j0_asia-southeast1_autopilot-cluster-1"
+  KUBE_NAMESPACE: "production"
+  DOMAIN: "ecommerce.bunlong.site"
 
 stages:
   - build
-  - database
-  - deploy
+  # - database
+  # - deploy
 
 # Build and Push Docker Image
 build:
@@ -27,100 +28,127 @@ build:
     - cat appsettings.json | grep "DefaultConnection"  
 
     # . at then end: is used the current directory to look for the Dockerfile
-    - docker build -t $IMAGE_NAME:$CI_COMMIT_SHA -t $IMAGE_NAME:latest .
-    - docker push $IMAGE_NAME:$CI_COMMIT_SHA
-    - docker push $IMAGE_NAME:latest
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA -t $CI_REGISTRY_IMAGE:latest .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE:latest
   only:
     - main
     - develop
 
-# Database Setup
-setup_database:
-  stage: database
-  image: mcr.microsoft.com/mssql-tools
-  before_script:
-    - echo $KUBE_CONFIG | base64 -d > $KUBECONFIG
-    - kubectl config use-context do-sgp1-your-cluster-name
-  script:
-    # Wait for SQL Server to be ready
-    - echo "Waiting for SQL Server to be ready..."
-    - kubectl wait --for=condition=ready pod -l app=mssql -n production --timeout=300s
-    
-    # Get SQL Server service endpoint
-    - MSSQL_HOST=$(kubectl get svc mssql-service -n production -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-    - echo "SQL Server host: $MSSQL_HOST"
-    
-    # Create database if not exists
-    - |
-      /opt/mssql-tools/bin/sqlcmd -S "$MSSQL_HOST,1433" -U sa -P "YourStrong@Password123!" -Q "
-      IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'Ecommerce')
-      BEGIN
-          CREATE DATABASE Ecommerce;
-          PRINT 'Database Ecommerce created successfully.';
-      END
-      ELSE
-      BEGIN
-          PRINT 'Database Ecommerce already exists.';
-      END"
-    
-    # Verify database creation
-    - /opt/mssql-tools/bin/sqlcmd -S "$MSSQL_HOST,1433" -U sa -P "YourStrong@Password123!" -Q "SELECT name FROM sys.databases WHERE name = 'Ecommerce';"
-  environment:
-    name: production
-  when: manual
-  only:
-    - main
-  needs: []
+# # Database Setup
+# setup_database:
+#   stage: database
+#   image: mcr.microsoft.com/mssql-tools
+#   before_script:
+#     # # Install kubectl
+#     # - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+#     # - chmod +x kubectl
+#     # - mv kubectl /usr/local/bin/
 
-# Database Migration with EF Core (Alternative approach)
-migrate_database:
-  stage: database
-  image: mcr.microsoft.com/dotnet/sdk:9.0
-  before_script:
-    - echo $KUBE_CONFIG | base64 -d > $KUBECONFIG
-    - kubectl config use-context do-sgp1-your-cluster-name
-    - dotnet tool install --global dotnet-ef
-    - export PATH="$PATH:/root/.dotnet/tools"
-  script:
-    # Get SQL Server external IP
-    - MSSQL_HOST=$(kubectl get svc mssql-service -n production -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-    - echo "Migrating to SQL Server at: $MSSQL_HOST"
-    
-    # Update connection string with actual host
-    - MIGRATION_CONNECTION_STRING="Server=$MSSQL_HOST,1433;Database=Ecommerce;User Id=sa;Password=YourStrong@Password123!;TrustServerCertificate=True;"
-    
-    # Run EF migrations
-    - dotnet ef database update --connection "$MIGRATION_CONNECTION_STRING"
-  when: manual
-  only:
-    - main
-  environment:
-    name: production
-  needs:
-    - setup_database
+#     # # Verify connection
+#     # - kubectl cluster-info
+#     # - kubectl get nodes
 
-# Deploy to Kubernetes
-deploy_production:
-  stage: deploy
-  image: bitnami/kubectl:latest
-  before_script:
-    - echo $KUBE_CONFIG | base64 -d > $KUBECONFIG
-    - kubectl config use-context do-sgp1-your-cluster-name
-  script:
-    # Update image tag in ArgoCD application manifest
-    - kubectl patch application aspnet-ecommerce -n argocd --type='merge' -p='{"spec":{"source":{"helm":{"parameters":[{"name":"image.tag","value":"'$CI_COMMIT_SHA'"}]}}}}'
+#     - echo $KUBE_CONFIG | base64 -d > $KUBECONFIG
+#     - kubectl config use-context $KUBECONTEXT
+#   script:
+#     # Wait for SQL Server to be ready
+#     - echo "Waiting for SQL Server to be ready..."
+#     - kubectl wait --for=condition=ready pod -l app=mssql -n production --timeout=300s
     
-    # Trigger ArgoCD sync (optional - ArgoCD can auto-sync)
-    - kubectl patch application aspnet-ecommerce -n argocd --type='merge' -p='{"operation":{"sync":{"revision":"HEAD"}}}'
+#     # Get SQL Server service endpoint
+#     - MSSQL_HOST=$(kubectl get svc mssql-service -n production -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+#     - echo "SQL Server host: $MSSQL_HOST"
     
-    # Wait for sync to complete
-    - kubectl wait --for=condition=Synced application/aspnet-ecommerce -n argocd --timeout=300s
+#     # Create database if not exists
+#     - |
+#       /opt/mssql-tools/bin/sqlcmd -S "$MSSQL_HOST,1433" -U sa -P "YourStrong@Password123!" -Q "
+#       IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'Ecommerce')
+#       BEGIN
+#           CREATE DATABASE Ecommerce;
+#           PRINT 'Database Ecommerce created successfully.';
+#       END
+#       ELSE
+#       BEGIN
+#           PRINT 'Database Ecommerce already exists.';
+#       END"
     
-    # Verify deployment in production namespace
-    - kubectl get pods -n production -l app=aspnet-app
-  environment:
-    name: production
-    url: https://yourdomain.com
-  when: manual
-  only:
-    - main
+#     # Verify database creation
+#     - /opt/mssql-tools/bin/sqlcmd -S "$MSSQL_HOST,1433" -U sa -P "YourStrong@Password123!" -Q "SELECT name FROM sys.databases WHERE name = 'Ecommerce';"
+#   environment:
+#     name: $KUBE_NAMESPACE
+#   when: manual
+#   only:
+#     - main
+#   needs: []
+
+# # Database Migration with EF Core (Alternative approach)
+# migrate_database:
+#   stage: database
+#   image: mcr.microsoft.com/dotnet/sdk:9.0
+#   before_script:
+#     # # Install kubectl
+#     # - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+#     # - chmod +x kubectl
+#     # - mv kubectl /usr/local/bin/
+
+#     # # Verify connection
+#     # - kubectl cluster-info
+#     # - kubectl get nodes
+
+#     - echo $KUBE_CONFIG | base64 -d > $KUBECONFIG
+#     - kubectl config use-context $KUBECONTEXT
+#     - dotnet tool install --global dotnet-ef
+#     - export PATH="$PATH:/root/.dotnet/tools"
+#   script:
+#     # Get SQL Server external IP
+#     - MSSQL_HOST=$(kubectl get svc mssql-service -n production -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+#     - echo "Migrating to SQL Server at: $MSSQL_HOST"
+    
+#     # Update connection string with actual host
+#     - MIGRATION_CONNECTION_STRING="Server=$MSSQL_HOST,1433;Database=Ecommerce;User Id=sa;Password=YourStrong@Password123!;TrustServerCertificate=True;"
+    
+#     # Run EF migrations
+#     - dotnet ef database update --connection "$MIGRATION_CONNECTION_STRING"
+#   when: manual
+#   only:
+#     - main
+#   environment:
+#     name: $KUBE_NAMESPACE
+#   needs:
+#     - setup_database
+
+# # Deploy to Kubernetes
+# deploy_production:
+#   stage: deploy
+#   image: bitnami/kubectl:latest
+#   before_script:
+#     - echo $KUBE_CONFIG | base64 -d > $KUBECONFIG
+#     - kubectl config use-context $KUBECONTEXT
+#   script:
+#     # Update image tag in ArgoCD application manifest
+#     - kubectl patch application aspnet-ecommerce -n argocd --type='merge' -p='{"spec":{"source":{"helm":{"parameters":[{"name":"image.repository","value":"'$CI_REGISTRY_IMAGE'"},{"name":"image.tag","value":"'$CI_COMMIT_SHA'"}]}}}}'
+    
+#     # Trigger ArgoCD sync (optional - ArgoCD can auto-sync)
+#     - kubectl patch application aspnet-ecommerce -n argocd --type='merge' -p='{"operation":{"sync":{"revision":"HEAD"}}}'
+    
+#     # Wait for sync to complete
+#     - kubectl wait --for=condition=Synced application/aspnet-ecommerce -n argocd --timeout=300s
+    
+#     # Verify deployment in production namespace
+#     - kubectl get pods -n production -l app=aspnet-app
+
+#     # Check TLS certificate status
+#     - kubectl get certificate -n production
+#     - kubectl describe certificate aspnet-tls-secret -n production
+
+#     # Display service URLs
+#     - echo "📱 API Base URL: https://$DOMAIN"
+#     - echo "📖 Swagger UI: https://$DOMAIN/swagger"
+#     - echo "🔒 TLS Certificate: $(kubectl get certificate aspnet-tls-secret -n production -o jsonpath='{.status.conditions[0].status}')"
+#   environment:
+#     name: $KUBE_NAMESPACE
+#     url: https://$DOMAIN
+#   when: manual
+#   only:
+#     - main
