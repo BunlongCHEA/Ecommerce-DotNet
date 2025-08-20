@@ -3,7 +3,6 @@ apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
   name: letsencrypt-prod
-  namespace: argocd  # ArgoCD will manage this
   labels:
     app.kubernetes.io/instance: aspnet-ecommerce
 spec:
