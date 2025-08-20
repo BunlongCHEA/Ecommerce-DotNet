@@ -5,6 +5,9 @@ metadata:
   name: letsencrypt-prod
   labels:
     app.kubernetes.io/instance: aspnet-ecommerce
+  annotations:
+    # Skip ArgoCD validation for cert-manager resources
+    argocd.argoproj.io/sync-options: Validate=false,Replace=true
 spec:
   acme:
     # Let's Encrypt production server
