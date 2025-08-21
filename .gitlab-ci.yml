@@ -2,13 +2,16 @@
 variables:
   DOCKER_DRIVER: overlay2
   DOCKER_TLS_CERTDIR: "/certs"
-  KUBECONFIG: /tmp/kubeconfig
+  # KUBECONFIG: /tmp/kubeconfig
   KUBECONTEXT: "gke_theta-moment-469209-j0_asia-southeast1_autopilot-cluster-1"
   KUBE_NAMESPACE: "production"
   DOMAIN: "ecommerce.bunlong.site"
   MSSQL_PASSWORD: "YourStrong@Password123!"
   MSSQL_DB: "Ecommerce"
-  KUBE_CONFIGS: "ewogICJ0eXBlIjogInNlcnZpY2VfYWNjb3VudCIsCiAgInByb2plY3RfaWQiOiAidGhldGEtbW9tZW50LTQ2OTIwOS1qMCIsCiAgInByaXZhdGVfa2V5X2lkIjogIjBhN2RkYzRlZjAzNjE3NzY3OGNkMzViNDU3NDkwNGQwY2JkNDkxZGIiLAogICJwcml2YXRlX2tleSI6ICItLS0tLUJFR0lOIFBSSVZBVEUgS0VZLS0tLS1cbk1JSUV2UUlCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktjd2dnU2pBZ0VBQW9JQkFRQ3BkcVBlNjlURkpJNUtcbk0zRE9ob2lETE44Um04Z1Z2TFVKZ0Z0Qld5NUpoMzlCakpTeHh2M2FSWnRoY1F1eEdmcEcrcUhCM3QvMGwyNjFcbmt5cVUvcDZyS3h3WGl2eVB0cUI0RXVPaGs4eTNRRkpVUE5XU0cycmp6NktuRVdudVovQjhKS01HWGFSMFBjVXdcbmNTWmN3MEZBNkZoK0dyK3B3SVJZandUS3cxamMxcGRQQ0J4UWEyMlpVZkRreittNG5ITFd6WHVSeXBONUpFbWNcbnREb1ZQYWIzbXNJekpCckFWU0dwQm50M1lGV3NpbzMvLzkzdEtyeEI2VVBMekpYNXNrS3lrcVdUMVZJTm9YQktcbmhIQ2FxUG90SWRKVWlqNGM3bGVNWVdSU29yeks4LzZubE1RMk56eTZpTTNHSDBnWDliYXBQK3FXdHZSTjlEb1FcbnZwVDlkdXFGQWdNQkFBRUNnZ0VBQWNFZWV5RVN1U0lZSEhWZ0pzbmR0UHhqa3lPN1R4UGJNRWJNWUdNa0x5djNcbmhHR0RIVmtMbnBHckUySmR6VkNLQVhYeExGOGNWbUQ3Zy9URHhVaTMzUk9BME04L0VtUHJtRE9HRlNia2xqQ0dcbmVhdUFIUlBxd01tN2xtMEY2NGU2akxVaG5OSEpUY0g5bmhhdkg2NXlJZWxBaVlBZXF6cjR6S3ZMZXVDdFdPck9cbjZDMkJGYVpReVpLMlUxRWp4WFpFeWxNeWM1OUl6ZkN6N1IwTXFrV1dZWDAzT2tvcEJLc1ViYkYxOWZVZFludnVcblcvNnBDQWppaUZncHE1eG02bGVtb1QyMml1YVVmdThENm56Q291a0lVZlRlOGZiQko4dTF4NnFyRVV2VEVPanNcbldPazI3MWlobUw1SkNRUnRHdW5vbHdQMHV6YUdBQ1N3VnZFS0YyM0I0UUtCZ1FEc1dMbThYNHJPejlHSG1kYlpcbmlqZXJoY2hNWENTNERlSHlGTHp4ckRZNk9JUDBtWUVueVBubjVRMlVHb3JiQlhyQ3BzS2NYdjBBMWNVSnV3bEpcbm93RzRqVXJhVkZQNkdCYlJPVEpsOFB0MVZHMGRjazRRdEUxL3Q2UTRRclljSUVJKytSdFlyK3o2ZnlZWExJcXBcbmp3S2VNQ293b1hYVVlJKzBjdERzRjdoOEpRS0JnUUMzamlCZVpRRGM0SVNuQ1VwdEEvdU83S2lJUUdMQTZWVkhcbmVGWmQ0L2lPdFNpVXY3R1J2RGQxalNLYzJpWUFkVjM2c0NhK1RRSHRaTHNtQ2FaL0xJVXQ4VXB1MWVUSStLWnhcblE3QlljNmhXazZXK3lhMExlOGFKTDRqMkhuM251L3ROV285OUJxWE5DY0tvR3hGVVJpNFhsdjJ4ellvenRINHNcbjhKaWlwdm8yNFFLQmdIVUwyNi8yZ1ArNjI4R1Q1bHNGb0Z4SmZOQ1VNWHNWSlBpR1hLd3k1UWdnUlBrMXJFalBcbnR6T29zL2pNekVkN2h6Z3U3ZUlUQ0trSk5QT0V0U3pLbFdlWVVhR2VjWmhCcGNzbjBGVzc2a3hJNjJEUjR1ZFNcbjQ2NkVlOGVCQWo4Ym1yTWxHdTNvOGl0OEhKa05iZjVhM0trS29WcEVHOTU1azdHQnl3V2hHYlFoQW9HQkFJWTBcbmoyd1U4MDJMaHRIT1ZERmk0Ukc5N1BjNkJEcENJQTBTYWl0WjNFa1RJV21vd3I3b1c3QkNFZFdYRm9QdFRGcFhcbll1eHV4NEwzekhIaVNtN2ZjVHlIR0VIemQ4U05NTHpObmVqK0gwMjF4RkM3aWg5RVQ0UE1VcHFJN3N0NVFTTnNcbm5FN3dobGRrMUlNdXp6dkwyRFY5TzE0K0J0Y0pGOXZweWQvYXNFVmhBb0dBQTlEaVFjczVadmI3YzJ0SXprSHJcbkMvdVZubXVsTGVzbm9NUUdFRXhZRThha0Y3SEZtZTFJejlTRmk4ZTZta2dZSERPZ01EN01VQ29oampSOUNHQTdcblR0NG5oZzluWmljZlNXTldldTJLbG8zYkY0NmhyVC9pSmxSOHZGTWJJaUU0V2lDQXM3QUpxQy9yN04rVDhGOW9cbk9LQU1XNEx2MHFza1ZxVmtGcmhWaE5nPVxuLS0tLS1FTkQgUFJJVkFURSBLRVktLS0tLVxuIiwKICAiY2xpZW50X2VtYWlsIjogImMtYnVubG9uZzE2OC1nbWFpbC1jb21AdGhldGEtbW9tZW50LTQ2OTIwOS1qMC5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbSIsCiAgImNsaWVudF9pZCI6ICIxMDY5MzQ4OTAxMTAzODY2MDM2NDYiLAogICJhdXRoX3VyaSI6ICJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20vby9vYXV0aDIvYXV0aCIsCiAgInRva2VuX3VyaSI6ICJodHRwczovL29hdXRoMi5nb29nbGVhcGlzLmNvbS90b2tlbiIsCiAgImF1dGhfcHJvdmlkZXJfeDUwOV9jZXJ0X3VybCI6ICJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9vYXV0aDIvdjEvY2VydHMiLAogICJjbGllbnRfeDUwOV9jZXJ0X3VybCI6ICJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9yb2JvdC92MS9tZXRhZGF0YS94NTA5L2MtYnVubG9uZzE2OC1nbWFpbC1jb20lNDB0aGV0YS1tb21lbnQtNDY5MjA5LWowLmlhbS5nc2VydmljZWFjY291bnQuY29tIiwKICAidW5pdmVyc2VfZG9tYWluIjogImdvb2dsZWFwaXMuY29tIgp9Cg=="
+  # GKE Configuration
+  GCP_PROJECT_ID: "theta-moment-469209-j0"
+  GKE_CLUSTER_NAME: "autopilot-cluster-1"
+  GKE_CLUSTER_ZONE: "asia-southeast1"
 
 stages:
   - build
@@ -43,9 +46,21 @@ setup_database:
   stage: database
   image: google/cloud-sdk:latest
   before_script:
-    - echo $KUBE_CONFIGS | base64 -d > $KUBECONFIG
-    - kubectl config use-context $KUBECONFIG
+    # Use your KUBE_CONFIGS as service account key (it's actually a service account JSON!)
+    - echo "Authenticating with Google Cloud using service account..."
+    - echo $KUBE_CONFIG | base64 -d > /tmp/gcp-service-account.json
+    - gcloud auth activate-service-account --key-file /tmp/gcp-service-account.json
+    - gcloud config set project $GCP_PROJECT_ID
+    
+    # Get GKE cluster credentials
+    - echo "Getting GKE cluster credentials..."
+    - gcloud container clusters get-credentials $GKE_CLUSTER_NAME --zone $GKE_CLUSTER_ZONE --project $GCP_PROJECT_ID
+    
+    # Verify connection
+    - echo "Verifying connection..."
     - kubectl cluster-info
+    - kubectl get nodes
+    - echo "Authentication successful!"
   script:
     # Wait for SQL Server to be ready
     - echo "Waiting for SQL Server to be ready..."
@@ -85,9 +100,16 @@ migrate_database:
   stage: database
   image: google/cloud-sdk:latest
   before_script:
-    - echo $KUBE_CONFIGS | base64 -d > $KUBECONFIG
-    - kubectl config use-context $KUBECONFIG
+    # Same authentication process
+    - echo "Authenticating with Google Cloud using service account..."
+    - echo $KUBE_CONFIG | base64 -d > /tmp/gcp-service-account.json
+    - gcloud auth activate-service-account --key-file /tmp/gcp-service-account.json
+    - gcloud config set project $GCP_PROJECT_ID
+    - echo "Getting GKE cluster credentials..."
+    - gcloud container clusters get-credentials $GKE_CLUSTER_NAME --zone $GKE_CLUSTER_ZONE --project $GCP_PROJECT_ID
+    - echo "Verifying connection..."
     - kubectl cluster-info
+    - kubectl get nodes
   script:
     - echo "Waiting for services to be ready..."
     - kubectl wait --for=condition=ready pod -l app=mssql -n $KUBE_NAMESPACE --timeout=300s
@@ -111,7 +133,7 @@ migrate_database:
 #   stage: deploy
 #   image: bitnami/kubectl:latest
 #   before_script:
-#     - echo $KUBE_CONFIGS | base64 -d > $KUBECONFIG
+#     - echo $KUBE_CONFIG | base64 -d > $KUBECONFIG
 #     - kubectl config use-context $KUBECONTEXT
 #   script:
 #     # Update image tag in ArgoCD application manifest
