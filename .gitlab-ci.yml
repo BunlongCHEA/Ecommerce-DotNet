@@ -40,7 +40,7 @@ build:
 # Database Setup using kubectl exec
 setup_database:
   stage: database
-  image: bitnami/kubectl:latest
+  image: google/cloud-sdk:latest
   before_script:
     - echo $KUBE_CONFIG | base64 -d > $KUBECONFIG
     - kubectl config use-context $KUBECONTEXT
@@ -82,7 +82,7 @@ setup_database:
 # Database Migration with EF Core
 migrate_database:
   stage: database
-  image: bitnami/kubectl:latest
+  image: google/cloud-sdk:latest
   before_script:
     - echo $KUBE_CONFIG | base64 -d > $KUBECONFIG
     - kubectl config use-context $KUBECONTEXT
