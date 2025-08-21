@@ -115,10 +115,44 @@ migrate_database:
     - kubectl wait --for=condition=ready pod -l app=mssql -n $KUBE_NAMESPACE --timeout=300s
     - kubectl wait --for=condition=ready pod -l app=aspnet-app -n $KUBE_NAMESPACE --timeout=300s
     - ASPNET_POD=$(kubectl get pods -l app=aspnet-app -n $KUBE_NAMESPACE -o jsonpath='{.items[0].metadata.name}')
-    - echo "Found ASP.NET pod"
-    - echo $ASPNET_POD
+    - echo "Found ASP.NET pod:" $ASPNET_POD
+    
+    # Check current environment
+    - echo "Checking current environment..."
+    - kubectl exec $ASPNET_POD -n $KUBE_NAMESPACE -- cat /etc/os-release
+    - kubectl exec $ASPNET_POD -n $KUBE_NAMESPACE -- dotnet --version || echo "dotnet not found"
+    
+    # Install prerequisites
+    - echo "Installing prerequisites..."
+    - kubectl exec $ASPNET_POD -n $KUBE_NAMESPACE -- apt-get update
+    - kubectl exec $ASPNET_POD -n $KUBE_NAMESPACE -- apt-get install -y wget apt-transport-https software-properties-common
+    
+    # Add Microsoft package repository
+    - echo "Adding Microsoft package repository..."
+    - kubectl exec $ASPNET_POD -n $KUBE_NAMESPACE -- wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb
+    - kubectl exec $ASPNET_POD -n $KUBE_NAMESPACE -- dpkg -i /tmp/packages-microsoft-prod.deb
+    - kubectl exec $ASPNET_POD -n $KUBE_NAMESPACE -- apt-get update
+    
+    # Install .NET SDK
+    - echo "Installing .NET SDK..."
+    - kubectl exec $ASPNET_POD -n $KUBE_NAMESPACE -- apt-get install -y dotnet-sdk-8.0
+    
+    # Verify SDK installation
+    - echo "Verifying SDK installation..."
+    - kubectl exec $ASPNET_POD -n $KUBE_NAMESPACE -- dotnet --version
+    - kubectl exec $ASPNET_POD -n $KUBE_NAMESPACE -- dotnet --list-sdks
+    
+    # Install EF Core tools
+    - echo "Installing EF Core tools..."
+    - kubectl exec $ASPNET_POD -n $KUBE_NAMESPACE -- dotnet tool install --global dotnet-ef
+    
+    # Verify EF tools installation
+    - echo "Verifying EF tools installation..."
+    - kubectl exec $ASPNET_POD -n $KUBE_NAMESPACE -- /root/.dotnet/tools/dotnet-ef --version
+    
+    # Run migrations using full path to dotnet-ef
     - echo "Running EF Core migrations..."
-    - kubectl exec $ASPNET_POD -n $KUBE_NAMESPACE -- dotnet ef database update --connection "Server=mssql-service,1433;Database=Ecommerce;User Id=sa;Password=$MSSQL_PASSWORD;TrustServerCertificate=True;Encrypt=True;" --verbose
+    - kubectl exec $ASPNET_POD -n $KUBE_NAMESPACE -- /root/.dotnet/tools/dotnet-ef database update --connection "Server=mssql-service,1433;Database=Ecommerce;User Id=sa;Password=$MSSQL_PASSWORD;TrustServerCertificate=True;" --verbose
     - echo "Migration completed successfully!"
   when: manual
   only:
