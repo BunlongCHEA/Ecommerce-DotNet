@@ -24,7 +24,13 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 # Copy published app
 COPY --from=publish /app/publish .
 
-# Change ownership of the app directory
+# Install EF tools for the appuser as well
+USER appuser
+RUN dotnet tool install --global dotnet-ef
+ENV PATH="$PATH:/home/appuser/.dotnet/tools"
+
+# Change back to root to fix permissions, then switch to appuser
+USER root
 RUN chown -R appuser:appuser /app
 
 # Switch to non-root user
