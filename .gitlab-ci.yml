@@ -44,7 +44,7 @@ setup_database:
   image: google/cloud-sdk:latest
   before_script:
     - echo $KUBE_CONFIGS | base64 -d > $KUBECONFIG
-    - kubectl config use-context $KUBECONTEXT
+    - kubectl config use-context $KUBECONFIG
     - kubectl cluster-info
   script:
     # Wait for SQL Server to be ready
@@ -86,7 +86,7 @@ migrate_database:
   image: google/cloud-sdk:latest
   before_script:
     - echo $KUBE_CONFIGS | base64 -d > $KUBECONFIG
-    - kubectl config use-context $KUBECONTEXT
+    - kubectl config use-context $KUBECONFIG
     - kubectl cluster-info
   script:
     - echo "Waiting for services to be ready..."
