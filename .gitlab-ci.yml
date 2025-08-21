@@ -24,7 +24,7 @@ build:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     # Update appsettings.json with production connection string
-    - sed -i 's|Server=server|Server=mssql-service,1433;Database=Ecommerce;User Id=sa;Password=YourStrong@Password123!;TrustServerCertificate=True;|g' appsettings.json
+    - sed -i 's|Server=34.124.219.191,1433;Database=Ecommerce;User Id=sa;Password=YourStrong@Password123!;TrustServerCertificate=True|Server=mssql-service,1433;Database=Ecommerce;User Id=sa;Password=YourStrong@Password123!;TrustServerCertificate=True;|g' appsettings.json
 
     # Verify the connection string was updated
     - cat appsettings.json | grep "DefaultConnection"
@@ -40,7 +40,7 @@ build:
 # Database Setup using kubectl exec
 setup_database:
   stage: database
-  image: google/cloud-sdk:alpine
+  image: bitnami/kubectl:latest
   before_script:
     - echo $KUBE_CONFIG | base64 -d > $KUBECONFIG
     - kubectl config use-context $KUBECONTEXT
@@ -82,7 +82,7 @@ setup_database:
 # Database Migration with EF Core
 migrate_database:
   stage: database
-  image: google/cloud-sdk:alpine
+  image: bitnami/kubectl:latest
   before_script:
     - echo $KUBE_CONFIG | base64 -d > $KUBECONFIG
     - kubectl config use-context $KUBECONTEXT
