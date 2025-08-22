@@ -38,6 +38,16 @@ spec:
             secretKeyRef:
               name: aspnet-secrets
               key: ConnectionStrings__DefaultConnection
+        - name: Jwt__Key
+          valueFrom:
+            secretKeyRef:
+              name: aspnet-secrets
+              key: Jwt__Key
+        - name: Jwt__Issuer
+          valueFrom:
+            configMapKeyRef:
+              name: aspnet-config
+              key: Jwt__Issuer
         resources:
           requests:
             memory: "512Mi"
@@ -73,7 +83,7 @@ metadata:
   labels:
     app: aspnet-app
 spec:
-  type: ClusterIP
+  type: NodePort  # Changed from ClusterIP to NodePort for GKE Ingress
   selector:
     app: aspnet-app
   ports:
@@ -92,6 +102,7 @@ metadata:
 data:
   ASPNETCORE_ENVIRONMENT: "Production"
   ASPNETCORE_URLS: "http://+:8080"
+  Jwt__Issuer: "https://ecommerce.bunlong.site"
 
 ---
 # ASP.NET Secrets
@@ -104,6 +115,19 @@ type: Opaque
 data:
   ConnectionStrings__DefaultConnection: U2VydmVyPW1zc3FsLXNlcnZpY2UsMTQzMztEYXRhYmFzZT1FY29tbWVyY2U7VXNlciBJZD1zYTtQYXNzd29yZD1Zb3VyU3Ryb25nQFBhc3N3b3JkMTIzITtUcnVzdFNlcnZlckNlcnRpZmljYXRlPVRydWU7
   # Base64 encoded: Server=mssql-service,1433;Database=Ecommerce;User Id=sa;Password=YourStrong@Password123!;TrustServerCertificate=True;
+  Jwt__Key: ZVVEU3hQOGhoSEJYa0RPTTRIdXByZGs3dXRVaWVJM21Pci9hL0lteUhEYz0=
+
+---
+# ManagedCertificate for Google-managed SSL
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: aspnet-ssl-cert
+  namespace: production
+spec:
+  domains:
+    - ecommerce.bunlong.site
+    - www.ecommerce.bunlong.site
 
 ---
 # Ingress for external access
@@ -113,8 +137,8 @@ metadata:
   name: aspnet-ingress
   namespace: production
   annotations:
-    kubernetes.io/ingress.class: nginx
-    # cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Use GKE Ingress instead of -- nginx
+    kubernetes.io/ingress.class: "gce"
     # Cloudflare specific annotations
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
@@ -123,36 +147,46 @@ metadata:
     nginx.ingress.kubernetes.io/cors-allow-origin: "http://ecommerce.bunlong.site"
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
     nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
-    # Force HTTPS redirect
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    # Reference the managed certificate
+    networking.gke.io/managed-certificates: "aspnet-ssl-cert"
+    # Redirect HTTP to HTTPS
+    ingress.gcp.io/ssl-redirect: "true"
 spec:
-  # For HTTP only
   rules:
   - host: ecommerce.bunlong.site
     http:
       paths:
-      - path: /
-        pathType: Prefix
+      - path: /*
+        pathType: ImplementationSpecific # Prefix
         backend:
           service:
             name: aspnet-service
             port:
               number: 80
-# spec:
-#   tls:
-#   - hosts:
-#     - ecommerce.bunlong.site
-#     secretName: aspnet-tls-secret
-#   rules:
-#   - host: ecommerce.bunlong.site
-#     http:
-#       paths:
-#       - path: /
-#         pathType: Prefix
-#         backend:
-#           service:
-#             name: aspnet-service
-#             port:
-#               number: 80
+  - host: www.ecommerce.bunlong.site
+    http:
+      paths:
+      - path: /*
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: aspnet-service
+            port:
+              number: 80
+
+---
+# BackendConfig for additional settings (optional)
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: aspnet-backend-config
+  namespace: production
+spec:
+  timeoutSec: 300
+  connectionDraining:
+    drainingTimeoutSec: 60
+  healthCheck:
+    checkIntervalSec: 10
+    port: 8080
+    type: HTTP
+    requestPath: /health

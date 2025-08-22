@@ -1,7 +1,5 @@
 using ECommerceAPI.Data;
 using ECommerceAPI.Models;
-// using EcommerceAPI.Services;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -11,19 +9,29 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Make API to support CORS for Vue.js app for FrontEnd && SignalR for Chat
+// Configure for production with proper forwarded headers handling
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | 
+                              Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+// Make API to support CORS for Vue.js app for FrontEnd && SignalR for Chat && Swagger
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        // policy.SetIsOriginAllowed(_ => true) // Allow any origin (development only)
-        //     .AllowAnyHeader()
-        //     .AllowAnyMethod()
-        //     .AllowCredentials();
-        policy.WithOrigins("http://localhost:5173") // Vite default port
+        policy.WithOrigins(
+                "https://ecommerce.bunlong.site", // Your frontend domain
+                "https://www.ecommerce.bunlong.site", // www variant
+                "http://localhost:5173", // Development
+                "https://localhost:5173" // Development HTTPS
+            )
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials(); // Allow credentials for chat service;
+            .AllowCredentials();
     });
 });
 
@@ -31,7 +39,6 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers();
 
 // Add Email services
-// builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 
 // Add Entity Framework Core with SQL Server Database
@@ -39,12 +46,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add Identity services
-// builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
-//     .AddEntityFrameworkStores<ApplicationDbContext>()
-//     .AddDefaultTokenProviders();
 builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 {
     // Configure Identity options here
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequiredLength = 8;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
@@ -58,7 +67,7 @@ builder.Services.AddScoped<IProductService, ProductService>();
 // Add SignalR for real-time communication
 builder.Services.AddSignalR(options =>
 {
-    options.EnableDetailedErrors = true; // Enable detailed errors for debugging
+    options.EnableDetailedErrors = !builder.Environment.IsProduction();; // Enable detailed errors for debugging
 });
 
 builder.Services.AddScoped<IChatService, ChatService>();
@@ -71,11 +80,9 @@ builder.Services.AddAuthorization(options =>
 });
 
 // Configure JWT authentication
-// jwtIssuer and jwtKey issue from appsettings.json
 var jwtKey = builder.Configuration["Jwt:Key"];
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 
-// Null check for jwtKey and jwtIssuer
 if (string.IsNullOrEmpty(jwtKey) || string.IsNullOrEmpty(jwtIssuer))
 {
     throw new InvalidOperationException("JWT Key / Issuer settings are not configured properly or missing.");
@@ -83,21 +90,19 @@ if (string.IsNullOrEmpty(jwtKey) || string.IsNullOrEmpty(jwtIssuer))
 
 builder.Services.AddAuthentication(options =>
 {
-    // Register JWT as the default way to check identity for authentication and challenges (like 401 Unauthorized).
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
 {
-    // Setting rules for what makes a JWT valid.
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = true,  // Only accept tokens issued by a specific server
-        ValidateAudience = false,   // Optional: You can skip checking who the token is intended for (e.g., mobile, web)
-        ValidateLifetime = true,   // Reject tokens that are expired (exp claim in JWT). if not set, the token will be valid forever.
-        ValidateIssuerSigningKey = true,    // Check that the token is signed using your private key, and not forged.
-        ValidIssuer = jwtIssuer,    // Your app's issuer name — usually something like "your-app" or a domain name.
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)) // The secret key used to sign JWTs. Must match the one used when generating tokens.
+        ValidateIssuer = true,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtIssuer,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
     };
 
     options.Events = new JwtBearerEvents
@@ -115,8 +120,6 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -126,6 +129,34 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1",
         Description = "API for ECommerce application"
     });
+
+    // Configure Swagger for HTTPS in production
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                },
+                Scheme = "oauth2",
+                Name = "Bearer",
+                In = ParameterLocation.Header,
+            },
+            new List<string>()
+        }
+    });
 });
 
 // Add Health Checks
@@ -133,30 +164,39 @@ builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-// if (app.Environment.IsDevelopment())
-// {
-//     app.UseSwagger();
-//     app.UseSwaggerUI();
-// }
+// Use forwarded headers (important for GKE with Google-managed SSL)
+app.UseForwardedHeaders();
+
+// Configure the HTTP request pipeline
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "ECommerce API V1");
-    // c.RoutePrefix = string.Empty; // Set Swagger UI at the app's root
-    c.RoutePrefix = "swagger"; // Makes it available at /swagger
+    c.RoutePrefix = "swagger";
+    
+    // Configure Swagger UI for HTTPS in production
+    if (app.Environment.IsProduction())
+    {
+        c.ConfigObject.AdditionalItems.Add("persistAuthorization", "true");
+    }
 });
 
-app.MapHealthChecks("/health"); // Map health checks endpoint
+app.MapHealthChecks("/health");
 
 app.UseRouting();
-app.UseCors("AllowFrontend"); // Enable CORS for the specified policy
+app.UseCors("AllowFrontend");
 
-app.UseHttpsRedirection();
+// Remove UseHttpsRedirection for GKE with Google-managed SSL
+// The load balancer handles HTTPS termination
+if (!app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHub<ChatHub>("/chathub"); // Map SignalR hub for chat functionality
+app.MapHub<ChatHub>("/chathub");
 
 app.Run();
