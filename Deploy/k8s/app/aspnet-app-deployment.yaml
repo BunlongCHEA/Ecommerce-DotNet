@@ -82,13 +82,8 @@ metadata:
   namespace: production
   labels:
     app: aspnet-app
-  annotations:
-    # For GKE with Cloudflare
-    cloud.google.com/load-balancer-type: "External"
-    # Backend configuration reference
-    cloud.google.com/backend-config: '{"default": "aspnet-backend-config"}'
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: aspnet-app
   ports:
@@ -123,44 +118,6 @@ data:
   Jwt__Key: TFBCSGNVa1NPeTdiMWpsT3k5YSt2TU5qWW1ERU1KbUFaQ2tvU0krMVZCbz0=
 
 ---
-# BackendConfig for Cloudflare integration
-apiVersion: cloud.google.com/v1
-kind: BackendConfig
-metadata:
-  name: aspnet-backend-config
-  namespace: production
-spec:
-  # Timeout settings optimized for Cloudflare
-  timeoutSec: 300
-  connectionDraining:
-    drainingTimeoutSec: 60
-  
-  # Health check configuration
-  healthCheck:
-    checkIntervalSec: 10
-    timeoutSec: 5
-    healthyThreshold: 1
-    unhealthyThreshold: 3
-    port: 8080
-    type: HTTP
-    requestPath: /health
-  
-  # Session affinity (optional for stateful apps)
-  sessionAffinity:
-    affinityType: "CLIENT_IP"
-    affinityCookieTtlSec: 86400
-  
-  # Security policy (optional)
-  securityPolicy:
-    name: "cloudflare-security-policy"
-  
-  # Custom request headers for Cloudflare
-  customRequestHeaders:
-    headers:
-    - "X-Forwarded-Proto:https"
-    - "X-Forwarded-Port:443"
-
----
 # Ingress for external access
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -168,17 +125,47 @@ metadata:
   name: aspnet-ingress
   namespace: production
   annotations:
-    # Use GKE Ingress instead of -- nginx
-    kubernetes.io/ingress.class: "gce"
-    # Backend configuration
-    cloud.google.com/backend-config: '{"default": "aspnet-backend-config"}'
+    # Use NGINX Ingress Controller
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ingress.class: "nginx"
+    
+    # Cloudflare specific annotations
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+    
+    # Enable real IP forwarding from Cloudflare
+    nginx.ingress.kubernetes.io/enable-real-ip: "true"
+    nginx.ingress.kubernetes.io/real-ip-header: "X-Forwarded-For"
+    nginx.ingress.kubernetes.io/real-ip-recursive: "true"
+    
+    # CORS headers for Swagger and API
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://ecommerce.bunlong.site,https://www.ecommerce.bunlong.site"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Accept,Origin,X-Forwarded-For,X-Forwarded-Proto"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    
+    # SSL and security
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"  # Let Cloudflare handle HTTPS redirect
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"  # Let Cloudflare handle HTTPS redirect
+    
+    # Rate limiting (optional)
+    # nginx.ingress.kubernetes.io/rate-limit-connections: "20"
+    # nginx.ingress.kubernetes.io/rate-limit-requests-per-minute: "300"
+    
+    # Add custom headers to pass Cloudflare info to application
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Forwarded-Proto: https";
+      more_set_headers "X-Forwarded-Port: 443";
 spec:
   rules:
   - host: ecommerce.bunlong.site
     http:
       paths:
-      - path: /*
-        pathType: ImplementationSpecific # Prefix
+      - path: /
+        pathType: Prefix
         backend:
           service:
             name: aspnet-service
@@ -187,8 +174,8 @@ spec:
   - host: www.ecommerce.bunlong.site
     http:
       paths:
-      - path: /*
-        pathType: ImplementationSpecific
+      - path: /
+        pathType: Prefix
         backend:
           service:
             name: aspnet-service
