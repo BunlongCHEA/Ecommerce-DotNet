@@ -85,6 +85,8 @@ metadata:
   annotations:
     # For GKE with Cloudflare
     cloud.google.com/load-balancer-type: "External"
+    # Backend configuration reference
+    cloud.google.com/backend-config: '{"default": "aspnet-backend-config"}'
 spec:
   type: LoadBalancer
   selector:
@@ -121,16 +123,42 @@ data:
   Jwt__Key: TFBCSGNVa1NPeTdiMWpsT3k5YSt2TU5qWW1ERU1KbUFaQ2tvU0krMVZCbz0=
 
 ---
-# ManagedCertificate for Google-managed SSL
-apiVersion: networking.gke.io/v1
-kind: ManagedCertificate
+# BackendConfig for Cloudflare integration
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
 metadata:
-  name: aspnet-ssl-cert
+  name: aspnet-backend-config
   namespace: production
 spec:
-  domains:
-    - ecommerce.bunlong.site
-    - www.ecommerce.bunlong.site
+  # Timeout settings optimized for Cloudflare
+  timeoutSec: 300
+  connectionDraining:
+    drainingTimeoutSec: 60
+  
+  # Health check configuration
+  healthCheck:
+    checkIntervalSec: 10
+    timeoutSec: 5
+    healthyThreshold: 1
+    unhealthyThreshold: 3
+    port: 8080
+    type: HTTP
+    requestPath: /health
+  
+  # Session affinity (optional for stateful apps)
+  sessionAffinity:
+    affinityType: "CLIENT_IP"
+    affinityCookieTtlSec: 86400
+  
+  # Security policy (optional)
+  securityPolicy:
+    name: "cloudflare-security-policy"
+  
+  # Custom request headers for Cloudflare
+  customRequestHeaders:
+    headers:
+    - "X-Forwarded-Proto:https"
+    - "X-Forwarded-Port:443"
 
 ---
 # Ingress for external access
@@ -142,18 +170,8 @@ metadata:
   annotations:
     # Use GKE Ingress instead of -- nginx
     kubernetes.io/ingress.class: "gce"
-    # Cloudflare specific annotations
-    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
-    # Add CORS headers for Swagger
-    nginx.ingress.kubernetes.io/cors-allow-origin: "http://ecommerce.bunlong.site"
-    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
-    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
-    # Reference the managed certificate
-    networking.gke.io/managed-certificates: "aspnet-ssl-cert"
-    # Redirect HTTP to HTTPS
-    ingress.gcp.io/ssl-redirect: "true"
+    # Backend configuration
+    cloud.google.com/backend-config: '{"default": "aspnet-backend-config"}'
 spec:
   rules:
   - host: ecommerce.bunlong.site
@@ -176,20 +194,3 @@ spec:
             name: aspnet-service
             port:
               number: 80
-
----
-# BackendConfig for additional settings (optional)
-apiVersion: cloud.google.com/v1
-kind: BackendConfig
-metadata:
-  name: aspnet-backend-config
-  namespace: production
-spec:
-  timeoutSec: 300
-  connectionDraining:
-    drainingTimeoutSec: 60
-  healthCheck:
-    checkIntervalSec: 10
-    port: 8080
-    type: HTTP
-    requestPath: /health
