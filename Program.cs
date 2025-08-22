@@ -186,12 +186,11 @@ app.MapHealthChecks("/health");
 app.UseRouting();
 app.UseCors("AllowFrontend");
 
-// Remove UseHttpsRedirection for GKE with Google-managed SSL
 // The load balancer handles HTTPS termination
-if (!app.Environment.IsProduction())
-{
-    app.UseHttpsRedirection();
-}
+// if (!app.Environment.IsProduction())
+// {
+//     app.UseHttpsRedirection();
+// }
 
 app.UseAuthentication();
 app.UseAuthorization();

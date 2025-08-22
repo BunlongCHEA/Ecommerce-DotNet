@@ -82,8 +82,11 @@ metadata:
   namespace: production
   labels:
     app: aspnet-app
+  annotations:
+    # For GKE with Cloudflare
+    cloud.google.com/load-balancer-type: "External"
 spec:
-  type: NodePort  # Changed from ClusterIP to NodePort for GKE Ingress
+  type: LoadBalancer
   selector:
     app: aspnet-app
   ports:
@@ -115,7 +118,7 @@ type: Opaque
 data:
   ConnectionStrings__DefaultConnection: U2VydmVyPW1zc3FsLXNlcnZpY2UsMTQzMztEYXRhYmFzZT1FY29tbWVyY2U7VXNlciBJZD1zYTtQYXNzd29yZD1Zb3VyU3Ryb25nQFBhc3N3b3JkMTIzITtUcnVzdFNlcnZlckNlcnRpZmljYXRlPVRydWU7
   # Base64 encoded: Server=mssql-service,1433;Database=Ecommerce;User Id=sa;Password=YourStrong@Password123!;TrustServerCertificate=True;
-  Jwt__Key: ZVVEU3hQOGhoSEJYa0RPTTRIdXByZGs3dXRVaWVJM21Pci9hL0lteUhEYz0=
+  Jwt__Key: TFBCSGNVa1NPeTdiMWpsT3k5YSt2TU5qWW1ERU1KbUFaQ2tvU0krMVZCbz0=
 
 ---
 # ManagedCertificate for Google-managed SSL
