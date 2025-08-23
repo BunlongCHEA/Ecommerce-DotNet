@@ -5,7 +5,7 @@ variables:
   # KUBECONFIG: /tmp/kubeconfig
   KUBECONTEXT: "gke_theta-moment-469209-j0_asia-southeast1_autopilot-cluster-1"
   KUBE_NAMESPACE: "production"
-  DOMAIN: "ecommerce.bunlong.site"
+  DOMAIN: "ecommerceapi.bunlong.site"
   MSSQL_PASSWORD: "YourStrong@Password123!"
   MSSQL_DB: "Ecommerce"
   # GKE Configuration

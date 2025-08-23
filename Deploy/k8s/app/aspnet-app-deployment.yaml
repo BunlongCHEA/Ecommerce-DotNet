@@ -102,7 +102,7 @@ metadata:
 data:
   ASPNETCORE_ENVIRONMENT: "Production"
   ASPNETCORE_URLS: "http://+:8080"
-  Jwt__Issuer: "https://ecommerce.bunlong.site"
+  Jwt__Issuer: "https://ecommerceapi.bunlong.site"
 
 ---
 # ASP.NET Secrets
@@ -141,7 +141,7 @@ metadata:
     nginx.ingress.kubernetes.io/real-ip-recursive: "true"
     
     # CORS headers for Swagger and API
-    nginx.ingress.kubernetes.io/cors-allow-origin: "https://ecommerce.bunlong.site,https://www.ecommerce.bunlong.site"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://ecommerceapi.bunlong.site,https://www.ecommerceapi.bunlong.site"
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS, PATCH"
     nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Accept,Origin,X-Forwarded-For,X-Forwarded-Proto"
     nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
@@ -161,20 +161,20 @@ metadata:
       more_set_headers "X-Forwarded-Port: 443";
 spec:
   rules:
-  - host: ecommerce.bunlong.site
+  - host: ecommerceapi.bunlong.site
     http:
       paths:
-      - path: /
+      - path: /swagger
         pathType: Prefix
         backend:
           service:
             name: aspnet-service
             port:
               number: 80
-  - host: www.ecommerce.bunlong.site
+  - host: www.ecommerceapi.bunlong.site
     http:
       paths:
-      - path: /
+      - path: /swagger
         pathType: Prefix
         backend:
           service:
