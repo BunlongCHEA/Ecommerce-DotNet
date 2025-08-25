@@ -24,8 +24,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy.WithOrigins(
-                "https://ecommerce.bunlong.site", // Your frontend domain
-                "https://www.ecommerce.bunlong.site", // www variant
+                "https://ecommercevue.bunlong.site", // Your frontend domain
+                "https://www.ecommercevue.bunlong.site", // www variant
                 "http://localhost:5173", // Development
                 "https://localhost:5173" // Development HTTPS
             )
