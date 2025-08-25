@@ -31,6 +31,7 @@ build:
     - sed -i 's|Server=34.124.219.191,1433;Database=Ecommerce;User Id=sa;Password=YourStrong@Password123!;TrustServerCertificate=True|Server=mssql-service,1433;Database=Ecommerce;User Id=sa;Password=YourStrong@Password123!;TrustServerCertificate=True;|g' appsettings.json
 
     - sed -i 's|ecommercevue.bunlong.site|ecommercevue.bunlong.site|g' Program.cs
+    - sed -i 's|ecommerceapi.bunlong.site|ecommerceapi.bunlong.site|g' Program.cs
 
     # Verify the connection string was updated
     - cat appsettings.json | grep "DefaultConnection"

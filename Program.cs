@@ -23,13 +23,15 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        // policy.WithOrigins(
-        //         "https://ecommercevue.bunlong.site", // Your frontend domain
-        //         "https://www.ecommercevue.bunlong.site", // www variant
-        //         "http://localhost:5173", // Development
-        //         "https://localhost:5173" // Development HTTPS
-        //     )
-        policy.AllowAnyOrigin()
+        // policy.AllowAnyOrigin()
+        policy.WithOrigins(
+                "https://ecommercevue.bunlong.site", // frontend domain
+                "https://www.ecommercevue.bunlong.site", // www variant
+                "https://ecommerceapi.bunlong.site", // backend domain
+                "https://www.ecommerceapi.bunlong.site", // www variant
+                "http://localhost:5173", // Development
+                "https://localhost:5173" // Development HTTPS
+            )
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
