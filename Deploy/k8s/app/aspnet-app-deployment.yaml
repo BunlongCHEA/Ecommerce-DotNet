@@ -141,7 +141,7 @@ metadata:
     nginx.ingress.kubernetes.io/real-ip-recursive: "true"
     
     # CORS headers for Swagger and API
-    nginx.ingress.kubernetes.io/cors-allow-origin: "https://ecommerceapi.bunlong.site,https://www.ecommerceapi.bunlong.site"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://ecommerceapi.bunlong.site,https://www.ecommerceapi.bunlong.site,https://ecommercevue.bunlong.site,https://www.ecommercevue.bunlong.site"
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS, PATCH"
     nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Accept,Origin,X-Forwarded-For,X-Forwarded-Proto"
     nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
@@ -164,7 +164,7 @@ spec:
   - host: ecommerceapi.bunlong.site
     http:
       paths:
-      - path: /swagger
+      - path: /
         pathType: Prefix
         backend:
           service:
@@ -174,7 +174,7 @@ spec:
   - host: www.ecommerceapi.bunlong.site
     http:
       paths:
-      - path: /swagger
+      - path: /
         pathType: Prefix
         backend:
           service:
