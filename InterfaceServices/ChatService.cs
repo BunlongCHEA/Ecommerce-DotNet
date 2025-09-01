@@ -81,6 +81,8 @@ public class ChatService : IChatService
                         receiverId = m.ReceiverId,
                         receiverName = m.Receiver != null ? m.Receiver.UserName : "Unknown",
                         message = m.Message,
+                        imageId = m.ImageId,
+                        linkUrl = m.LinkUrl,
                         timestamp = m.Timestamp,
                         isRead = m.IsRead,
                         chatRoomId = m.ChatRoomId
@@ -96,7 +98,7 @@ public class ChatService : IChatService
         }
     }
 
-    public async Task<ChatMessage?> SendMessageAsync(int roomId, int senderId, string message)
+    public async Task<ChatMessage?> SendMessageAsync(int roomId, int senderId, string message, string? imageId = null)
     {
         try
         {
@@ -113,11 +115,20 @@ public class ChatService : IChatService
 
             var receiverId = chatRoom.CustomerId == senderId ? chatRoom.SellerId : chatRoom.CustomerId;
 
+            // Extract URLs from message
+            string? extractedUrl = null;
+            if (!string.IsNullOrEmpty(message))
+            {
+                extractedUrl = ExtractUrlFromMessage(message);
+            }
+
             var chatMessage = new ChatMessage
             {
                 SenderId = senderId,
                 ReceiverId = receiverId,
                 Message = message,
+                ImageId = imageId,
+                LinkUrl = extractedUrl,
                 Timestamp = DateTimeOffset.UtcNow,
                 IsRead = false,
                 ConnectionType = "customer-seller",
@@ -259,5 +270,15 @@ public class ChatService : IChatService
             _logger.LogError(ex, $"Error getting unread messages count for room {roomId}");
             return 0;
         }
+    }
+
+    private string? ExtractUrlFromMessage(string message)
+    {
+        if (string.IsNullOrEmpty(message))
+            return null;
+
+        var urlPattern = @"https?://[^\s]+";
+        var match = System.Text.RegularExpressions.Regex.Match(message, urlPattern);
+        return match.Success ? match.Value : null;
     }
 }

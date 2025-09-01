@@ -8,10 +8,12 @@ using Microsoft.AspNetCore.Mvc;
 public class ChatController : ControllerBase
 {
     private readonly IChatService _chatService;
+    private readonly IChatImageService _imageService;
     private readonly ILogger<ChatController> _logger;
 
-    public ChatController(IChatService chatService, ILogger<ChatController> logger)
+    public ChatController(IChatService chatService, IChatImageService imageService, ILogger<ChatController> logger)
     {
+        _imageService = imageService;
         _chatService = chatService;
         _logger = logger;
     }
@@ -127,6 +129,151 @@ public class ChatController : ControllerBase
         }
     }
 
+    [HttpPost("upload")]
+    public async Task<IActionResult> UploadImage([FromForm] UploadImageRequest request)
+    {
+        try
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+                return Unauthorized("User not authenticated");
+
+            var imageId = await _imageService.UploadImageAsync(
+                request.File, 
+                currentUserId.Value, 
+                request.ChatRoomId, 
+                request.Description);
+
+            return Ok(new { imageId });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid(ex.Message);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error uploading image");
+            return StatusCode(500, "Internal server error");
+        }
+    }
+
+    [HttpGet("{imageId}")]
+    public async Task<IActionResult> GetImage(string imageId)
+    {
+        try
+        {
+            var image = await _imageService.GetImageAsync(imageId);
+            if (image == null)
+                return NotFound("Image not found");
+
+            return File(image.ImageData, image.ContentType, image.FileName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting image {ImageId}", imageId);
+            return StatusCode(500, "Internal server error");
+        }
+    }
+
+    [HttpGet("info/{imageId}")]
+    public async Task<IActionResult> GetImageInfo(string imageId)
+    {
+        try
+        {
+            var image = await _imageService.GetImageAsync(imageId);
+            if (image == null)
+                return NotFound("Image not found");
+
+            var imageInfo = new
+            {
+                id = image.Id,
+                fileName = image.FileName,
+                contentType = image.ContentType,
+                fileSize = image.FileSize,
+                uploadedBy = image.UploadedBy,
+                uploadedAt = image.UploadedAt,
+                chatRoomId = image.ChatRoomId,
+                description = image.Description,
+                width = image.Width,
+                height = image.Height
+            };
+
+            return Ok(imageInfo);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting image info {ImageId}", imageId);
+            return StatusCode(500, "Internal server error");
+        }
+    }
+
+    [HttpDelete("{imageId}")]
+    public async Task<IActionResult> DeleteImage(string imageId)
+    {
+        try
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+                return Unauthorized("User not authenticated");
+
+            var deleted = await _imageService.DeleteImageAsync(imageId, currentUserId.Value);
+            if (!deleted)
+                return NotFound("Image not found");
+
+            return Ok();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting image {ImageId}", imageId);
+            return StatusCode(500, "Internal server error");
+        }
+    }
+
+    [HttpGet("room/{chatRoomId}/images")]
+    public async Task<IActionResult> GetChatRoomImages(int chatRoomId)
+    {
+        try
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+                return Unauthorized("User not authenticated");
+
+            var images = await _imageService.GetChatRoomImagesAsync(chatRoomId, currentUserId.Value);
+            
+            var imageList = images.Select(img => new
+            {
+                id = img.Id,
+                fileName = img.FileName,
+                contentType = img.ContentType,
+                fileSize = img.FileSize,
+                uploadedBy = img.UploadedBy,
+                uploadedAt = img.UploadedAt,
+                description = img.Description,
+                width = img.Width,
+                height = img.Height
+            });
+
+            return Ok(imageList);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting chat room images for room {ChatRoomId}", chatRoomId);
+            return StatusCode(500, "Internal server error");
+        }
+    }
+
     [HttpGet("history/{roomId}")]
     public async Task<IActionResult> GetChatHistory(int roomId, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
     {
@@ -228,12 +375,4 @@ public class ChatController : ControllerBase
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         return int.TryParse(userIdClaim, out var userId) ? userId : null;
     }
-}
-
-// Simple request model for creating chat room
-public class CreateChatRoomRequest
-{
-    public int CustomerId { get; set; }
-    public int SellerId { get; set; }
-    public int StoreId { get; set; }
 }

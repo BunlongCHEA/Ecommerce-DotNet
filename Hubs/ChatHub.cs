@@ -63,9 +63,12 @@ public class ChatHub : Hub
                     senderName = chatMessage.Sender?.UserName ?? "Unknown",
                     receiverId = chatMessage.ReceiverId,
                     message = chatMessage.Message,
+                    imageId = chatMessage.ImageId,
+                    linkUrl = chatMessage.LinkUrl,
                     timestamp = chatMessage.Timestamp,
                     isRead = chatMessage.IsRead,
-                    chatRoomId = chatMessage.ChatRoomId
+                    chatRoomId = chatMessage.ChatRoomId,
+                    hasImage = !string.IsNullOrEmpty(chatMessage.ImageId)
                 };
 
                 await Clients.Group($"ChatRoom_{roomId}").SendAsync("ReceiveMessage", messageResponse);
@@ -75,6 +78,47 @@ public class ChatHub : Hub
         {
             _logger.LogError(ex, $"Error sending message in room {roomId}");
             await Clients.Caller.SendAsync("Error", "Failed to send message");
+        }
+    }
+
+    public async Task SendMessageWithImage(string roomId, string message, string imageId)
+    {
+        var senderId = GetCurrentUserId();
+        if (senderId == null)
+        {
+            await Clients.Caller.SendAsync("Error", "Unauthorized access");
+            return;
+        }
+
+        try
+        {
+            // Call SendMessageAsync with imageId
+            var chatMessage = await _chatService.SendMessageAsync(int.Parse(roomId), senderId.Value, message, imageId);
+            
+            if (chatMessage != null)
+            {
+                var messageResponse = new
+                {
+                    id = chatMessage.Id,
+                    senderId = chatMessage.SenderId,
+                    senderName = chatMessage.Sender?.UserName ?? "Unknown",
+                    receiverId = chatMessage.ReceiverId,
+                    message = chatMessage.Message,
+                    imageId = chatMessage.ImageId,
+                    linkUrl = chatMessage.LinkUrl,
+                    timestamp = chatMessage.Timestamp,
+                    isRead = chatMessage.IsRead,
+                    chatRoomId = chatMessage.ChatRoomId,
+                    hasImage = !string.IsNullOrEmpty(chatMessage.ImageId)
+                };
+
+                await Clients.Group($"ChatRoom_{roomId}").SendAsync("ReceiveMessage", messageResponse);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error sending message with image in room {roomId}");
+            await Clients.Caller.SendAsync("Error", "Failed to send message with image");
         }
     }
 

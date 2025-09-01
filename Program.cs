@@ -48,6 +48,13 @@ builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// MongoDB Configuration
+builder.Services.Configure<MongoDbSettings>(
+    builder.Configuration.GetSection("MongoDbSettings"));
+
+// MongoDB Service
+builder.Services.AddSingleton<IMongoDbService, MongoDbService>();
+
 // Add Identity services
 builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 {
@@ -66,6 +73,7 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IOrderItemService, OrderItemService>();
 builder.Services.AddScoped<IShipmentService, ShipmentService>();
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IChatImageService, ChatImageService>();
 
 // Add SignalR for real-time communication
 builder.Services.AddSignalR(options =>

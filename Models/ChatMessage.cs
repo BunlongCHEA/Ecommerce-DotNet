@@ -17,9 +17,14 @@ public class ChatMessage : BaseEntity
     [ValidateNever]
     public ApplicationUser? Receiver { get; set; } // Navigation property to ApplicationUser
 
-    [Required]
     [StringLength(500)]
     public string? Message { get; set; }
+
+    [StringLength(500)]
+    public string? ImageId { get; set; } // MongoDB ObjectId reference
+
+    [StringLength(500)]
+    public string? LinkUrl { get; set; } // Extracted URL from Message
 
     public DateTimeOffset? Timestamp { get; set; }
 
