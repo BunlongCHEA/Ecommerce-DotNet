@@ -30,7 +30,7 @@ build:
     # Update appsettings.json with production connection string
     - sed -i 's|Server=DESKTOP-CQSN3MN\\SQLSERVERDEV2022;Database=Ecommerce;User Id=sa;Password=12345;TrustServerCertificate=True|Server=mssql-service,1433;Database=Ecommerce;User Id=sa;Password=YourStrong@Password123!;TrustServerCertificate=True;|g' appsettings.json
 
-    - sed -i 's|mongodb+srv://cbunlong168_db_user:ooyZ1lqtgsz27dPG@clusterlocal.12eysnm.mongodb.net/?retryWrites=true&w=majority&appName=ClusterLocal|mongodb+srv://cbunlong168_db_user:ooyZ1lqtgsz27dPG@clusterlocal.12eysnm.mongodb.net/?retryWrites=true&w=majority&appName=ClusterLocal|g' appsettings.json
+    - sed -i 's|mongodb+srv://cbunlong168_db_user:ooyZ1lqtgsz27dPG@clusterlocal.12eysnm.mongodb.net/?retryWrites=true&w=majority&appName=ClusterLocal|mongodb|g' appsettings.json
 
     - sed -i 's|ecommercevue.bunlong.site|ecommercevue.bunlong.site|g' Program.cs
     - sed -i 's|ecommerceapi.bunlong.site|ecommerceapi.bunlong.site|g' Program.cs
