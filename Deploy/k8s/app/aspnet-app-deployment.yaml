@@ -150,10 +150,8 @@ metadata:
     # SSL and security
     nginx.ingress.kubernetes.io/ssl-redirect: "false"  # Let Cloudflare handle HTTPS redirect
     nginx.ingress.kubernetes.io/force-ssl-redirect: "false"  # Let Cloudflare handle HTTPS redirect
-    
-    # Rate limiting (optional)
-    # nginx.ingress.kubernetes.io/rate-limit-connections: "20"
-    # nginx.ingress.kubernetes.io/rate-limit-requests-per-minute: "300"
+    nginx.ingress.kubernetes.io/server-snippet: |
+      add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'; connect-src 'self' ws: wss: http: https: *.bunlong.site; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'" always;
     
     # Add custom headers to pass Cloudflare info to application
     nginx.ingress.kubernetes.io/configuration-snippet: |
