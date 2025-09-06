@@ -39,12 +39,21 @@ public class ShipmentService : IShipmentService
         return new OkObjectResult(shipments);
     }
 
-    public async Task<ActionResult<Shipment>> GetShipment(int id, string userId)
+    public async Task<ActionResult<Shipment>> GetShipment(int id, string userId, string userRole)
     {
-        var shipment = await _context.Shipments
-                            .Include(s => s.ShipmentType) // Include related shipment type data
-                            .Include(s => s.Location) // Include related location data
-                            .Where(s => s.Id == id && s.Location != null && s.Location.UserId == int.Parse(userId)) // Ensure the shipment belongs to the logged-in user
+        var query = _context.Shipments
+                    .Include(s => s.ShipmentType) // Include related shipment type data
+                    .Include(s => s.Location) // Include related location data
+                    .Where(s => s.Id == id && s.Location != null) // Base filter for valid shipments with specific ID
+                    .AsQueryable();
+
+        // Apply user-specific filter only if the user is not an Admin
+        if (userRole != "Admin")
+        {
+            query = query.Where(s => s.Location.UserId == int.Parse(userId)); // Ensure the shipment belongs to the logged-in user
+        }
+
+        var shipment = await query
                             .Select(s => new
                             {
                                 s.Id,
@@ -61,7 +70,10 @@ public class ShipmentService : IShipmentService
 
         if (shipment == null)
         {
-            return new NotFoundObjectResult("Shipment not found or does not belong to the logged-in user.");
+            string message = userRole == "Admin" 
+                ? $"Shipment with ID {id} not found in the system."
+                : "Shipment not found or does not belong to the logged-in user.";
+            return new NotFoundObjectResult(message);
         }
 
         return new OkObjectResult(shipment);

@@ -49,7 +49,16 @@ namespace EcommerceAPI.Controllers
                 return Unauthorized("User not authenticated or valid.");
             }
 
-            return await _shipmentService.GetShipment(id, userId);            
+            // Get user role
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+            Console.WriteLine($"User Role: {userRole}");
+            
+            if (string.IsNullOrEmpty(userRole))
+            {
+                return Unauthorized("User role not found.");
+            }
+
+            return await _shipmentService.GetShipment(id, userId, userRole);            
         }
 
         // POST: api/shipment

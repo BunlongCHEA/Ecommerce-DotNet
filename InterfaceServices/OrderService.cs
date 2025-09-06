@@ -74,13 +74,22 @@ public class OrderService : IOrderService
         return new OkObjectResult(orders);
     }
 
-    public async Task<ActionResult<Order>> GetOrder(int id, string userId)
+    public async Task<ActionResult<Order>> GetOrder(int id, string userId, string userRole)
     {
-        var order = await _context.Orders
+        var query = _context.Orders
                         .Include(o => o.Payment) // Include Payment for the order
                         .Include(o => o.Shipment) // Include Shipment for the order
                         .Include(o => o.CouponUserList) // Include CouponUserList for each order
-                        .Where(o => o.Id == id && o.Payment != null && o.Payment.UserId == int.Parse(userId)) // Ensure the order belongs to the logged-in user & payment is not null
+                        .Where(o => o.Id == id && o.Payment != null)
+                    .AsQueryable();
+
+        // Filter by user role --  && oi.Order.Payment.UserId == int.Parse(userId)
+        if (userRole != "Admin")
+        {
+            query = query.Where(o => o.Payment.UserId == int.Parse(userId)); // Ensure the order item belongs to the logged-in user
+        }
+
+        var order = await query
                         .Select(o => new
                         {
                             o.Id,
