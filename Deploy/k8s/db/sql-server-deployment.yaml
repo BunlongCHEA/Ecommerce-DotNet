@@ -142,11 +142,19 @@ spec:
     - podSelector:
         matchLabels:
           app: aspnet-app
+
   # Allow from same namespace (for admin tools, monitoring)
   # - from:
   #   - namespaceSelector:
   #       matchLabels:
   #         name: production
+
+  # Allow external access (for MSSQL Management Studio, Azure Data Studio)
+  - from: []  # Allow from any external source
+    ports:
+    - protocol: TCP
+      port: 1433
+
   egress:
   # Allow DNS resolution
   - to: []
