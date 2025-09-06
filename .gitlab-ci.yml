@@ -15,7 +15,6 @@ variables:
 
 stages:
   - build
-  - database
   # - deploy
 
 # Build and Push Docker Image
@@ -47,60 +46,6 @@ build:
   only:
     - main
     - develop
-
-# Database Setup using kubectl exec
-setup_database:
-  stage: database
-  image: google/cloud-sdk:latest
-  before_script:
-    # Use your KUBE_CONFIGS as service account key (it's actually a service account JSON!)
-    - echo "Authenticating with Google Cloud using service account..."
-    - echo $KUBE_CONFIG | base64 -d > /tmp/gcp-service-account.json
-    - gcloud auth activate-service-account --key-file /tmp/gcp-service-account.json
-    - gcloud config set project $GCP_PROJECT_ID
-    
-    # Get GKE cluster credentials
-    - echo "Getting GKE cluster credentials..."
-    - gcloud container clusters get-credentials $GKE_CLUSTER_NAME --zone $GKE_CLUSTER_ZONE --project $GCP_PROJECT_ID
-    
-    # Verify connection
-    - echo "Verifying connection..."
-    - kubectl cluster-info
-    - kubectl get nodes
-    - echo "Authentication successful!"
-  script:
-    # Wait for SQL Server to be ready
-    - echo "Waiting for SQL Server to be ready..."
-    - kubectl wait --for=condition=ready pod -l app=mssql -n $KUBE_NAMESPACE --timeout=300s
-
-    # Get the SQL Server pod name
-    - MSSQL_POD=$(kubectl get pods -l app=mssql -n $KUBE_NAMESPACE -o jsonpath='{.items[0].metadata.name}')
-    - echo "SQL Server pod:" $MSSQL_POD
-
-    # Test connection first (using the correct sqlcmd path for SQL Server 2022)
-    - kubectl exec $MSSQL_POD -n $KUBE_NAMESPACE -- /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_PASSWORD" -Q "SELECT @@VERSION" -C
-    
-    # Create database if not exists
-    - |
-      kubectl exec $MSSQL_POD -n $KUBE_NAMESPACE -- /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_PASSWORD" -C -Q "
-      IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = '$MSSQL_DB')
-      BEGIN
-          CREATE DATABASE [$MSSQL_DB];
-          PRINT 'Database $MSSQL_DB created successfully.';
-      END
-      ELSE
-      BEGIN
-          PRINT 'Database $MSSQL_DB already exists.';
-      END"
-    
-    # Verify database creation
-    - kubectl exec $MSSQL_POD -n $KUBE_NAMESPACE -- /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_PASSWORD" -Q "SELECT name FROM sys.databases WHERE name = '$MSSQL_DB';" -C
-  environment:
-    name: $KUBE_NAMESPACE
-  when: manual
-  only:
-    - main
-  needs: []
 
 # # Deploy to Kubernetes
 # deploy_production:

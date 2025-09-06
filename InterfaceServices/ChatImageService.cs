@@ -51,8 +51,7 @@ public class ChatImageService : IChatImageService
                 UploadedAt = DateTimeOffset.UtcNow
             };
 
-            // Optional: Get image dimensions (requires System.Drawing or ImageSharp)
-            // You can implement this later if needed
+            // Can also implement Get image dimensions (requires System.Drawing or ImageSharp)
 
             return await _mongoDb.SaveImageAsync(chatImage);
         }
