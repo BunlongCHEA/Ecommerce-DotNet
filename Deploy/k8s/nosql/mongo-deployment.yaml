@@ -1,3 +1,4 @@
+# MongoDB Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,7 +18,7 @@ spec:
     spec:
       containers:
       - name: mongodb
-        image: mongo:7.0
+        image: mongo:8.0
         ports:
         - containerPort: 27017
           name: mongodb
@@ -163,17 +164,34 @@ spec:
   - Ingress
   - Egress
   ingress:
+  # Allow from ASP.NET API or specific app
   - from:
     - podSelector:
         matchLabels:
           app: aspnet-app  # Allow only your API pods
     # Only allow these namespaces
-    # - namespaceSelector:
-    #     matchLabels:
-    #       name: production
+    - namespaceSelector:
+        matchLabels:
+          name: production
+    # ports:
+    # - protocol: TCP
+    #   port: 27017
+
+  # Allow from Mongo Express
+  # - from:
+  #   - podSelector:
+  #       matchLabels:
+  #         app: mongo-express
+  #   ports:
+  #   - protocol: TCP
+  #     port: 27017
+  
+  # Allow external access (for MongoDB Compass)
+  - from: []  # Allow from any external source
     ports:
     - protocol: TCP
       port: 27017
+      
   egress:
   # - {}  # Allow all outbound traffic
   - to: []  # Allow DNS
