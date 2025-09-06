@@ -150,13 +150,33 @@ metadata:
     # SSL and security
     nginx.ingress.kubernetes.io/ssl-redirect: "false"  # Let Cloudflare handle HTTPS redirect
     nginx.ingress.kubernetes.io/force-ssl-redirect: "false"  # Let Cloudflare handle HTTPS redirect
-    nginx.ingress.kubernetes.io/server-snippet: |
-      add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'; connect-src 'self' ws: wss: http: https: *.bunlong.site; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'" always;
     
-    # Add custom headers to pass Cloudflare info to application
+    # Add custom headers to pass Cloudflare info to application + CSP headers
     nginx.ingress.kubernetes.io/configuration-snippet: |
       more_set_headers "X-Forwarded-Proto: https";
       more_set_headers "X-Forwarded-Port: 443";
+      # CSP header to allow WebSocket connections
+      more_set_headers "Content-Security-Policy: default-src 'self' http: https: data: blob: 'unsafe-inline'; connect-src 'self' ws: wss: http: https: *.bunlong.site; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:";
+    
+    # Additional WebSocket support for SignalR
+    nginx.ingress.kubernetes.io/server-snippet: |
+      location /chathub {
+        proxy_pass http://upstream_balancer;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 86400;
+      }
+    
+    # # Add custom headers to pass Cloudflare info to application
+    # nginx.ingress.kubernetes.io/configuration-snippet: |
+    #   more_set_headers "X-Forwarded-Proto: https";
+    #   more_set_headers "X-Forwarded-Port: 443";
 spec:
   rules:
   - host: ecommerceapi.bunlong.site
