@@ -183,10 +183,9 @@ app.UseForwardedHeaders();
 // Add CSP middleware - ADD THIS BEFORE OTHER MIDDLEWARE
 app.Use(async (context, next) =>
 {
-    // Set CSP header to allow WebSocket connections
     context.Response.Headers.Add("Content-Security-Policy", 
         "default-src 'self' http: https: data: blob: 'unsafe-inline'; " +
-        "connect-src 'self' ws: wss: http: https:; " +
+        "connect-src 'self' ws: wss: http: https: *.bunlong.site; " +
         "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
         "style-src 'self' 'unsafe-inline'");
     
