@@ -27,7 +27,7 @@ build:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     # Update appsettings.json with production connection string
-    - sed -i 's|Server=DESKTOP-CQSN3MN\\SQLSERVERDEV2022;Database=Ecommerce;User Id=sa;Password=12345;TrustServerCertificate=True|Server=mssql-service,1433;Database=Ecommerce;User Id=sa;Password=YourStrong@Password123!;TrustServerCertificate=True;|g' appsettings.json
+    - sed -i 's|Server=DESKTOP-CQSN3MN\\SQLSERVERDEV2022;Database=Ecommerce;User Id=sa;Password=12345;TrustServerCertificate=True|Server=mssql-service,1433;Database=Ecommerce;User Id=sa;Password=YourStrong@Password123!;TrustServerCertificate=True|g' appsettings.json
 
     - sed -i 's|mongodb+srv://cbunlong168_db_user:ooyZ1lqtgsz27dPG@clusterlocal.12eysnm.mongodb.net/?retryWrites=true&w=majority&appName=ClusterLocal|mongodb://admin:RootPassword123@mongodb-service.production.svc.cluster.local:27017/MongoDB?authSource=admin|g' appsettings.json
 

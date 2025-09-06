@@ -123,63 +123,69 @@ data:
 
 ---
 # SQL Server Network Policy
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: mssql-network-policy
-  namespace: production
-spec:
-  podSelector:
-    matchLabels:
-      app: mssql
-  policyTypes:
-  - Ingress
-  - Egress
+# apiVersion: networking.k8s.io/v1
+# kind: NetworkPolicy
+# metadata:
+#   name: mssql-network-policy
+#   namespace: production
+# spec:
+#   podSelector:
+#     matchLabels:
+#       app: mssql
+#   policyTypes:
+#   - Ingress
+#   - Egress
   
-  ingress:
-  # Allow from ASP.NET Core application
-  - from:
-    - podSelector:
-        matchLabels:
-          app: aspnet-app
+#   ingress:
+#   # Allow from ASP.NET Core application
+#   - from:
+#     - podSelector:
+#         matchLabels:
+#           app: aspnet-app
+#     ports:
+#     - protocol: TCP
+#       port: 1433
 
-  # Allow from same namespace (for admin tools, monitoring)
-  # - from:
-  #   - namespaceSelector:
-  #       matchLabels:
-  #         name: production
+#   # Allow from same namespace (for admin tools, monitoring)
+#   - from:
+#     - namespaceSelector:
+#         matchLabels:
+#           name: production
+#     # ports:
+#     # - protocol: TCP
+#     #   port: 1433
 
-  # Allow external access (for MSSQL Management Studio, Azure Data Studio)
-  - from: []  # Allow from any external source
-    ports:
-    - protocol: TCP
-      port: 1433
+#   # Allow external access (for MSSQL Management Studio, Azure Data Studio)
+#   - from: []  # Allow from any external source
+#     ports:
+#     - protocol: TCP
+#       port: 1433
 
-  egress:
-  # Allow DNS resolution
-  - to: []
-    ports:
-    - protocol: UDP
-      port: 53
-    # - protocol: TCP
-    #   port: 53
+#   egress:
+#   # Allow DNS resolution
+#   - to: []
+#     ports:
+#     - protocol: UDP
+#       port: 53
+#     # - protocol: TCP
+#     #   port: 53
 
-  # Allow outbound to monitoring systems (if needed)
-  # - to:
-  #   - podSelector:
-  #       matchLabels:
-  #         app: prometheus
-  #   ports:
-  #   - protocol: TCP
-  #     port: 9090
+#   # Allow outbound to monitoring systems (if needed)
+#   # - to:
+#   #   - podSelector:
+#   #       matchLabels:
+#   #         app: prometheus
+#   #   ports:
+#   #   - protocol: TCP
+#   #     port: 9090
   
-  # Allow outbound for SQL Server Agent jobs (if needed)
-  # - to:
-  #   - namespaceSelector:
-  #       matchLabels:
-  #         name: production
-  #   ports:
-  #   - protocol: TCP
-  #     port: 443
-  #   - protocol: TCP
-  #     port: 80
+#   # Allow outbound for SQL Server Agent jobs (if needed)
+#   # - to:
+#   #   - namespaceSelector:
+#   #       matchLabels:
+#   #         name: production
+#   #   ports:
+#   #   - protocol: TCP
+#   #     port: 443
+#   #   - protocol: TCP
+#   #     port: 80
