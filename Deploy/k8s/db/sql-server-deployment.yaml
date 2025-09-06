@@ -120,3 +120,58 @@ metadata:
 type: Opaque
 data:
   SA_PASSWORD: WW91clN0cm9uZ0BQYXNzd29yZDEyMyE= # Base64 encoded: YourStrong@Password123!
+
+---
+# SQL Server Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mssql-network-policy
+  namespace: production
+spec:
+  podSelector:
+    matchLabels:
+      app: mssql
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  # Allow from ASP.NET Core application
+  - from:
+    - podSelector:
+        matchLabels:
+          app: aspnet-app
+  # Allow from same namespace (for admin tools, monitoring)
+  # - from:
+  #   - namespaceSelector:
+  #       matchLabels:
+  #         name: production
+  egress:
+  # Allow DNS resolution
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+    # - protocol: TCP
+    #   port: 53
+
+  # Allow outbound to monitoring systems (if needed)
+  # - to:
+  #   - podSelector:
+  #       matchLabels:
+  #         app: prometheus
+  #   ports:
+  #   - protocol: TCP
+  #     port: 9090
+  
+  # Allow outbound for SQL Server Agent jobs (if needed)
+  # - to:
+  #   - namespaceSelector:
+  #       matchLabels:
+  #         name: production
+  #   ports:
+  #   - protocol: TCP
+  #     port: 443
+  #   - protocol: TCP
+  #     port: 80
