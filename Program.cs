@@ -32,8 +32,9 @@ builder.Services.AddCors(options =>
                 "http://localhost:5173", // Development
                 "https://localhost:5173" // Development HTTPS
             )
-            .AllowAnyHeader()
+            // .AllowAnyHeader()
             .AllowAnyMethod()
+            .WithHeaders("x-signalr-user-agent", "content-type", "authorization", "accept", "user-agent")
             .AllowCredentials();
     });
 });
