@@ -12,7 +12,8 @@ public class OrderItemService : IOrderItemService
     }
 
     public async Task<ActionResult<IEnumerable<OrderItem>>> GetOrderItems(
-        string userId, 
+        string userId,
+        string userRole,
         int pageNumber = 1,
         int pageSize = 10,
         string searchQuery = null,
@@ -27,8 +28,14 @@ public class OrderItemService : IOrderItemService
                     .Include(oi => oi.Order.Shipment) // Include related shipment data
                     .Include(oi => oi.Product.Coupon) // Include related coupon data for product
                     .Include(oi => oi.Order.CouponUserList) // Include related coupon user list data
-                    .Where(oi => oi.Order != null && oi.Order.Payment != null && oi.Order.Payment.UserId == int.Parse(userId)) // Ensure the order item belongs to the logged-in user
+                    .Where(oi => oi.Order != null && oi.Order.Payment != null)
                     .AsQueryable();
+
+        // Filter by user role --  && oi.Order.Payment.UserId == int.Parse(userId)
+        if (userRole != "Admin")
+        {
+            query = query.Where(oi => oi.Order.Payment.UserId == int.Parse(userId)); // Ensure the order item belongs to the logged-in user
+        }
 
         // Apply search query if provided
         if (!string.IsNullOrEmpty(searchQuery))
@@ -39,9 +46,9 @@ public class OrderItemService : IOrderItemService
             }
             else
             {
-                query = query.Where(o => o.Order != null 
-                                         && o.Order.Shipment != null 
-                                         && o.Order.Shipment.TrackingNumber != null 
+                query = query.Where(o => o.Order != null
+                                         && o.Order.Shipment != null
+                                         && o.Order.Shipment.TrackingNumber != null
                                          && o.Order.Shipment.TrackingNumber.Contains(searchQuery));
             }
         }
@@ -127,8 +134,12 @@ public class OrderItemService : IOrderItemService
 
         if (orderItems == null || orderItems.Count == 0)
         {
-            return new NotFoundObjectResult("No order items found for the logged-in user.");
+            string message = userRole == "Admin" 
+                ? "No order items found in the system." 
+                : "No order items found for the logged-in user.";
+            return new NotFoundObjectResult(message);
         }
+        
         return new OkObjectResult(new
         {
             TotalCount = totalCount,
@@ -139,15 +150,28 @@ public class OrderItemService : IOrderItemService
         });
     }
 
-    public async Task<ActionResult<OrderItem>> GetOrderItem(int id, string userId)
+    public async Task<ActionResult<OrderItem>> GetOrderItem(int id, string userId, string userRole)
     {
-        var orderItems = await _context.OrderItems
-                        .Include(oi => oi.Product) // Include related product data
-                        .Include(oi => oi.Order) // Include related order 
-                        // .ThenInclude(o => o.CouponUserList) // Include related coupon user list data
-                        // .ThenInclude(cur => cur.Coupon) // Include related coupon data
-                        // .Include(oi => oi.Product != null ? oi.Product.Coupon : null) // Include related coupon data with null check
-                        .Where(oi => oi.Order != null && oi.Order.Payment != null && oi.Order.Payment.UserId == int.Parse(userId) && oi.OrderId == id) // Ensure the order item belongs to the logged-in user
+        var query = _context.OrderItems
+                    .Include(oi => oi.Product) // Include related product data
+                    .Include(oi => oi.Order) // Include related order 
+                    .Include(oi => oi.Order.Shipment) // Include related shipment data
+                    .Include(oi => oi.Product.Coupon) // Include related coupon data for product
+                    .Include(oi => oi.Order.CouponUserList) // Include related coupon user list data
+                        .ThenInclude(cur => cur.Coupon) // Include related coupon data
+                    .Include(oi => oi.Order.Shipment.Location) // Include location data
+                        .ThenInclude(l => l.LocationRegion) // Include region data
+                            .ThenInclude(lr => lr.LocationCountry) // Include country data
+                    .Where(oi => oi.Order != null && oi.Order.Payment != null && oi.OrderId == id) // Base filter for valid orders with specific OrderId
+                    .AsQueryable();
+
+        // Apply user-specific filter only if the user is not an Admin
+        if (userRole != "Admin")
+        {
+            query = query.Where(oi => oi.Order.Payment.UserId == int.Parse(userId)); // Ensure the order item belongs to the logged-in user
+        }
+
+        var orderItems = await query
                         .Select(oi => new
                         {
                             oi.Id,
@@ -208,9 +232,12 @@ public class OrderItemService : IOrderItemService
                         })
                         .ToListAsync();
 
-        if (orderItems == null)
+        if (orderItems == null || orderItems.Count == 0)
         {
-            return new NotFoundObjectResult("Order with ID {id} not found or does not belong to the user..");
+            string message = userRole == "Admin" 
+                ? $"Order with ID {id} not found in the system."
+                : $"Order with ID {id} not found or does not belong to the user.";
+            return new NotFoundObjectResult(message);
         }
         return new OkObjectResult(orderItems);
     }

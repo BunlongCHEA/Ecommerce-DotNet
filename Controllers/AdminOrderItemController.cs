@@ -44,12 +44,22 @@ namespace EcommerceAPI.Controllers
             {
                 return Unauthorized("User not authenticated or valid.");
             }
+
+            // Get user role
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+            Console.WriteLine($"User Role: {userRole}");
+            
+            if (string.IsNullOrEmpty(userRole))
+            {
+                return Unauthorized("User role not found.");
+            }
+
             foreach (var claim in User.Claims)
             {
                 Console.WriteLine($"{claim.Type} : {claim.Value}");
             }
             
-            return await _OrderItemService.GetOrderItems(userId, pageNumber, pageSize, searchQuery, searchType, statuses);
+            return await _OrderItemService.GetOrderItems(userId, userRole, pageNumber, pageSize, searchQuery, searchType, statuses);
         }
 
         // GET: api/admin/orderitem/{id}
@@ -63,7 +73,16 @@ namespace EcommerceAPI.Controllers
                 return Unauthorized("User not authenticated or valid.");
             }
 
-            return await _OrderItemService.GetOrderItem(id, userId);
+            // Get user role
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+            Console.WriteLine($"User Role: {userRole}");
+            
+            if (string.IsNullOrEmpty(userRole))
+            {
+                return Unauthorized("User role not found.");
+            }
+
+            return await _OrderItemService.GetOrderItem(id, userId, userRole);
         }
 
         // POST: api/admin/orderitem

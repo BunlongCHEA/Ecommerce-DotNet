@@ -49,6 +49,11 @@ INSERT INTO [LocationRegions] ([Region], [CountryId], [CreatedAt], [UpdatedAt]) 
 ('Manila', 6, '2025-01-15 13:40:00', '2025-01-15 13:40:00'),
 ('Jakarta', 7, '2025-01-15 13:45:00', '2025-01-15 13:45:00');
 
+INSERT INTO [ShipmentTypes] ([Type], [CreatedAt], [UpdatedAt]) VALUES 
+('Air freight', GETUTCDATE(), GETUTCDATE()),
+('Ocean freight', GETUTCDATE(), GETUTCDATE()),
+('Ground freight', GETUTCDATE(), GETUTCDATE());
+
 INSERT INTO [Stores] ([Name], [Latitude], [Longitude], [CreatedAt], [UpdatedAt]) VALUES
 ('TechHub Cambodia', 11.5564, 104.9282, '2025-01-15 14:00:00', '2025-01-15 14:00:00'),
 ('Fashion Central', 11.5449, 104.8922, '2025-01-15 14:05:00', '2025-01-15 14:05:00'),
