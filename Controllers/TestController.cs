@@ -21,7 +21,7 @@ namespace ECommerceAPI.Controllers
             try
             {
                 var apiKey = _configuration["SendGrid:ApiKey"];
-                var fromEmail = _configuration["SendGrid:FromEmail"]; // Should be sendgrid@bunlong.site
+                var fromEmail = _configuration["SendGrid:FromEmail"];
                 var fromName = _configuration["SendGrid:FromName"];
 
                 _logger.LogInformation($"Using API Key prefix: {apiKey?.Substring(0, 10)}...");
