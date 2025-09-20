@@ -41,6 +41,7 @@ build:
     - cat appsettings.json | grep "DefaultConnection"
     - cat appsettings.json | grep "MongoDbSettings"
     - cat Program.cs | grep "builder.Services.AddCors"
+    - cat appsettings.json | grep "SendGrid"
 
     # . at then end: is used the current directory to look for the Dockerfile
     - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA -t $CI_REGISTRY_IMAGE:latest .
