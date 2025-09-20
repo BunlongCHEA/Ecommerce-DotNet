@@ -108,7 +108,7 @@ spec:
   resources:
     requests:
       storage: 20Gi
-  storageClassName: standard-rwo
+  storageClassName: standard-rwo  # do-block-storage on DigitalOcean - standard-rwo on GKE
 
 ---
 # SQL Server Secrets

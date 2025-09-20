@@ -44,7 +44,8 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers();
 
 // Add Email services
-builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+// builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
 
 // Add Entity Framework Core with SQL Server Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

@@ -247,27 +247,45 @@ namespace ECommerceAPI.Controllers
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user == null)
             {
-                return Ok(new { message = "If that email is registered, a reset link has been sent."});
+                _logger.LogInformation($"User not found: {model.Email}");
+                // Return success message even if user doesn't exist for security
+                return Ok(new
+                {
+                    message = "If that email is registered, a reset link has been sent.",
+                    emailSent = false,
+                    details = "User not found"
+                });
             }
 
-            // Generate password reset token
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var encodeToken = WebUtility.UrlEncode(token); // Encode the token for URL safety
+            try
+            {
+                // Generate password reset token
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var encodeToken = WebUtility.UrlEncode(token); // Encode the token for URL safety
 
-            // Create the reset link, and pass a client URL to user to reset password by go to the link
-            var resetLink = $"{model.ClientUrl}/reset-password?token={encodeToken}&email={model.Email}";
-            var htmlTemplate = System.IO.File.ReadAllText("Templates/ResetPasswordEmail.html");
-            var htmlMessage = htmlTemplate.Replace("{RESET_LINK}", resetLink); // Replace placeholder with actual link
+                // Create the reset link, and pass a client URL to user to reset password by go to the link
+                var resetLink = $"{model.ClientUrl}/reset-password?token={encodeToken}&email={WebUtility.UrlEncode(model.Email)}";
 
-            // <a href='{resetLink}'>Reset Password</a>
-            await _emailSender.SendEmailAsync(
-                model.Email,
-                "Reset Password",
-                htmlMessage
-            );
+                // Read HTML template
+                var htmlTemplate = System.IO.File.ReadAllText("Templates/ResetPasswordEmail.html");
+                var htmlMessage = htmlTemplate.Replace("{RESET_LINK}", resetLink)
+                                            .Replace("{USER_EMAIL}", model.Email); // Replace placeholder with actual link
 
-            // Send email with the reset link (you need to implement this method in your email service)
-            return Ok(new { message = "Password reset token has been sent" });
+                // Send email using SendGrid: <a href='{resetLink}'>Reset Password</a>
+                await _emailSender.SendEmailAsync(
+                    model.Email,
+                    "Reset Password",
+                    htmlMessage
+                );
+
+                // Send email with the reset link (you need to implement this method in your email service)
+                return Ok(new { message = "Password reset token has been sent" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in ForgotPassword: failed to send email.");
+                return StatusCode(500, new { message = "Failed to send email. Please try again later." });
+            }
         }
 
         [HttpPost("reset-password")]
@@ -283,11 +301,14 @@ namespace ECommerceAPI.Controllers
             if (string.IsNullOrEmpty(model.Token) || string.IsNullOrEmpty(model.NewPassword))
                 return BadRequest("Token and new password are required.");
 
-            var result = await _userManager.ResetPasswordAsync(user, WebUtility.UrlDecode(model.Token), model.NewPassword);
+            var decodedToken = WebUtility.UrlDecode(model.Token);
+            var result = await _userManager.ResetPasswordAsync(user, decodedToken, model.NewPassword);
+
             if (result.Succeeded)
                 return Ok(new { message = "Password reset successfully!" });
 
-            return BadRequest(result.Errors);
+            var errors = result.Errors.Select(e => e.Description).ToList();
+            return BadRequest(new { message = "Failed to reset password.", errors });
         }
         
         private string? GetCurrentUserId()
