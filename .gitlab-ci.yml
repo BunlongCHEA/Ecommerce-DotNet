@@ -6,12 +6,12 @@ variables:
   KUBECONTEXT: "gke_theta-moment-469209-j0_asia-southeast1_autopilot-cluster-1"
   KUBE_NAMESPACE: "production"
   DOMAIN: "ecommerceapi.bunlong.site"
-  MSSQL_PASSWORD: "YourStrong@Password123!"
-  MSSQL_DB: "Ecommerce"
   # GKE Configuration
   GCP_PROJECT_ID: "theta-moment-469209-j0"
   GKE_CLUSTER_NAME: "autopilot-cluster-1"
   GKE_CLUSTER_ZONE: "asia-southeast1"
+  # Email API Key
+  EMAIL_FROMEMAIL: "sendgrid@bunlong.site"
 
 stages:
   - build
@@ -30,6 +30,9 @@ build:
     - sed -i 's|Server=DESKTOP-CQSN3MN\\SQLSERVERDEV2022;Database=Ecommerce;User Id=sa;Password=12345;TrustServerCertificate=True|Server=mssql-service,1433;Database=Ecommerce;User Id=sa;Password=YourStrong@Password123!;TrustServerCertificate=True|g' appsettings.json
 
     - sed -i 's|mongodb+srv://cbunlong168_db_user:ooyZ1lqtgsz27dPG@clusterlocal.12eysnm.mongodb.net/?retryWrites=true&w=majority&appName=ClusterLocal|mongodb://admin:RootPassword123@mongodb-service.production.svc.cluster.local:27017/MongoDB?authSource=admin|g' appsettings.json
+
+    - sed -i 's|SendGrid_API_Key|$EMAIL_API|g' appsettings.json
+    - sed -i 's|SendGrid_FromEmail|$EMAIL_FROMEMAIL|g' appsettings.json
 
     - sed -i 's|ecommercevue.bunlong.site|ecommercevue.bunlong.site|g' Program.cs
     - sed -i 's|ecommerceapi.bunlong.site|ecommerceapi.bunlong.site|g' Program.cs
