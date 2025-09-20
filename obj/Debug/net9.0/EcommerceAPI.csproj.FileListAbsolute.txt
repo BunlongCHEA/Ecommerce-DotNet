@@ -502,3 +502,5 @@ D:\1-Git\Ecommerce-DotNet\obj\Debug\net9.0\refint\EcommerceAPI.dll
 D:\1-Git\Ecommerce-DotNet\obj\Debug\net9.0\EcommerceAPI.pdb
 D:\1-Git\Ecommerce-DotNet\obj\Debug\net9.0\EcommerceAPI.genruntimeconfig.cache
 D:\1-Git\Ecommerce-DotNet\obj\Debug\net9.0\ref\EcommerceAPI.dll
+D:\1-Git\Ecommerce-DotNet\bin\Debug\net9.0\SendGrid.dll
+D:\1-Git\Ecommerce-DotNet\bin\Debug\net9.0\StarkbankEcdsa.dll
