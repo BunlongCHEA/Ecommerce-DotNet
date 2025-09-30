@@ -291,24 +291,61 @@ namespace ECommerceAPI.Controllers
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordModel model)
         {
+            // Validate required fields
             if (string.IsNullOrEmpty(model.Email))
-                return BadRequest("Email is required.");
+                return BadRequest(new { message = "Email is required." });
 
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
-                return BadRequest("Invalid request.");
+            if (string.IsNullOrEmpty(model.Token))
+                return BadRequest(new { message = "Reset token is required." });
 
-            if (string.IsNullOrEmpty(model.Token) || string.IsNullOrEmpty(model.NewPassword))
-                return BadRequest("Token and new password are required.");
+            if (string.IsNullOrEmpty(model.NewPassword))
+                return BadRequest(new { message = "New password is required." });
 
-            var decodedToken = WebUtility.UrlDecode(model.Token);
-            var result = await _userManager.ResetPasswordAsync(user, decodedToken, model.NewPassword);
+            if (string.IsNullOrEmpty(model.ConfirmPassword))
+                return BadRequest(new { message = "Confirm password is required." });
 
-            if (result.Succeeded)
-                return Ok(new { message = "Password reset successfully!" });
+            // Check if passwords match
+            if (model.NewPassword != model.ConfirmPassword)
+                return BadRequest(new { message = "Passwords do not match." });
 
-            var errors = result.Errors.Select(e => e.Description).ToList();
-            return BadRequest(new { message = "Failed to reset password.", errors });
+            // Validate password strength (optional)
+            if (model.NewPassword.Length < 6)
+                return BadRequest(new { message = "Password must be at least 6 characters long." });
+
+            try
+            {
+                var user = await _userManager.FindByEmailAsync(model.Email);
+                if (user == null)
+                {
+                    _logger.LogWarning($"Reset password attempt for non-existent user: {model.Email}");
+                    return BadRequest(new { message = "Invalid request." });
+                }
+
+                var decodedToken = WebUtility.UrlDecode(model.Token);
+                
+                _logger.LogInformation($"Attempting to reset password for user: {model.Email}");
+                
+                var result = await _userManager.ResetPasswordAsync(user, decodedToken, model.NewPassword);
+
+                if (result.Succeeded)
+                {
+                    _logger.LogInformation($"Password reset successful for user: {model.Email}");
+                    return Ok(new { message = "Password reset successfully!" });
+                }
+
+                var errors = result.Errors.Select(e => e.Description).ToList();
+                _logger.LogWarning($"Password reset failed for user: {model.Email}. Errors: {string.Join(", ", errors)}");
+                
+                return BadRequest(new { 
+                    message = "Failed to reset password.", 
+                    errors = errors 
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error resetting password for user: {model.Email}");
+                return StatusCode(500, new { message = "An error occurred while resetting the password." });
+            }
         }
         
         private string? GetCurrentUserId()
