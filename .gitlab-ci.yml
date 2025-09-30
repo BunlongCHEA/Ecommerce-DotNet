@@ -60,40 +60,40 @@ build:
     - develop
 
   # Deploy SQL Server Database
-deploy-sql-server:
-  stage: deploy
-  image: google/cloud-sdk:alpine
-  before_script:
-    - echo $GCP_SERVICE_ACCOUNT_KEY | base64 -d > /tmp/gcp-key.json
-    - gcloud auth activate-service-account --key-file /tmp/gcp-key.json
-    - gcloud config set project $GCP_PROJECT_ID
-    - gcloud container clusters get-credentials $GKE_CLUSTER_NAME --zone $GKE_CLUSTER_ZONE --project $GCP_PROJECT_ID
-    - kubectl config set-context --current --namespace=$KUBE_NAMESPACE
-  script:
-    - kubectl apply -f Deploy/k8s/db/
-    - kubectl rollout status deployment/sql-server -n $KUBE_NAMESPACE --timeout=300s
-  when: manual
-  only:
-    - main
-    - develop
+# deploy-sql-server:
+#   stage: deploy
+#   image: google/cloud-sdk:alpine
+#   before_script:
+#     - echo $GCP_SERVICE_ACCOUNT_KEY | base64 -d > /tmp/gcp-key.json
+#     - gcloud auth activate-service-account --key-file /tmp/gcp-key.json
+#     - gcloud config set project $GCP_PROJECT_ID
+#     - gcloud container clusters get-credentials $GKE_CLUSTER_NAME --zone $GKE_CLUSTER_ZONE --project $GCP_PROJECT_ID
+#     - kubectl config set-context --current --namespace=$KUBE_NAMESPACE
+#   script:
+#     - kubectl apply -f Deploy/k8s/db/
+#     - kubectl rollout status deployment/sql-server -n $KUBE_NAMESPACE --timeout=300s
+#   when: manual
+#   only:
+#     - main
+#     - develop
 
-# Deploy MongoDB
-deploy-mongodb:
-  stage: deploy
-  image: google/cloud-sdk:alpine
-  before_script:
-    - echo $GCP_SERVICE_ACCOUNT_KEY | base64 -d > /tmp/gcp-key.json
-    - gcloud auth activate-service-account --key-file /tmp/gcp-key.json
-    - gcloud config set project $GCP_PROJECT_ID
-    - gcloud container clusters get-credentials $GKE_CLUSTER_NAME --zone $GKE_CLUSTER_ZONE --project $GCP_PROJECT_ID
-    - kubectl config set-context --current --namespace=$KUBE_NAMESPACE
-  script:
-    - kubectl apply -f Deploy/k8s/nosql/
-    - kubectl rollout status deployment/mongodb -n $KUBE_NAMESPACE --timeout=300s
-  when: manual
-  only:
-    - main
-    - develop
+# # Deploy MongoDB
+# deploy-mongodb:
+#   stage: deploy
+#   image: google/cloud-sdk:alpine
+#   before_script:
+#     - echo $GCP_SERVICE_ACCOUNT_KEY | base64 -d > /tmp/gcp-key.json
+#     - gcloud auth activate-service-account --key-file /tmp/gcp-key.json
+#     - gcloud config set project $GCP_PROJECT_ID
+#     - gcloud container clusters get-credentials $GKE_CLUSTER_NAME --zone $GKE_CLUSTER_ZONE --project $GCP_PROJECT_ID
+#     - kubectl config set-context --current --namespace=$KUBE_NAMESPACE
+#   script:
+#     - kubectl apply -f Deploy/k8s/nosql/
+#     - kubectl rollout status deployment/mongodb -n $KUBE_NAMESPACE --timeout=300s
+#   when: manual
+#   only:
+#     - main
+#     - develop
 
 # # Deploy to Kubernetes
 # deploy_production:
