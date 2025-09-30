@@ -261,10 +261,18 @@ namespace ECommerceAPI.Controllers
             {
                 // Generate password reset token
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                var encodeToken = WebUtility.UrlEncode(token); // Encode the token for URL safety
+                // var encodeToken = WebUtility.UrlEncode(token); // Encode the token for URL safety
+
+                // Use Base64 encoding instead of URL encoding for better compatibility
+                var encodeToken = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(token));
 
                 // Create the reset link, and pass a client URL to user to reset password by go to the link
                 var resetLink = $"{model.ClientUrl}/reset-password?token={encodeToken}&email={WebUtility.UrlEncode(model.Email)}";
+
+                // Log for debugging
+                _logger.LogInformation($"Generated reset token for user: {model.Email}");
+                _logger.LogInformation($"Token length: {token.Length}");
+                _logger.LogInformation($"Encoded token length: {encodeToken.Length}");
 
                 // Read HTML template
                 var htmlTemplate = System.IO.File.ReadAllText("Templates/ResetPasswordEmail.html");
@@ -321,9 +329,23 @@ namespace ECommerceAPI.Controllers
                     return BadRequest(new { message = "Invalid request." });
                 }
 
-                var decodedToken = WebUtility.UrlDecode(model.Token);
+                // var decodedToken = WebUtility.UrlDecode(model.Token);
+                // Decode the Base64 token
+                string decodedToken;
+                try
+                {
+                    var tokenBytes = Convert.FromBase64String(model.Token);
+                    decodedToken = System.Text.Encoding.UTF8.GetString(tokenBytes);
+                }
+                catch (Exception)
+                {
+                    // Fallback to URL decoding if Base64 fails
+                    decodedToken = WebUtility.UrlDecode(model.Token);
+                }
                 
                 _logger.LogInformation($"Attempting to reset password for user: {model.Email}");
+                _logger.LogInformation($"Original token length: {model.Token.Length}");
+                _logger.LogInformation($"Decoded token length: {decodedToken.Length}");
                 
                 var result = await _userManager.ResetPasswordAsync(user, decodedToken, model.NewPassword);
 
