@@ -15,7 +15,7 @@ variables:
 
 stages:
   - build
-  - deploy
+  # - deploy
 
 # Build and Push Docker Image
 build:
@@ -33,13 +33,22 @@ build:
 
     - sed -i 's|mongodb+srv://cbunlong168_db_user:ooyZ1lqtgsz27dPG@clusterlocal.12eysnm.mongodb.net/?retryWrites=true&w=majority&appName=ClusterLocal|mongodb://admin:RootPassword123@mongodb-service.production.svc.cluster.local:27017/MongoDB?authSource=admin|g' appsettings.json
 
-    # - sed -i 's|SendGrid_API_Key|$EMAIL_API|g' appsettings.json
-    # - sed -i 's|SendGrid_FromEmail|$EMAIL_FROMEMAIL|g' appsettings.json
+    - sed -i "s|SendGrid_API_Key|$EMAIL_API|g" appsettings.json
+    - sed -i "s|SendGrid_FromEmail|$EMAIL_FROMEMAIL|g" appsettings.json
 
     - sed -i 's|ecommercevue.bunlong.site|ecommercevue.bunlong.site|g' Program.cs
     - sed -i 's|ecommerceapi.bunlong.site|ecommerceapi.bunlong.site|g' Program.cs
 
     # Verify the connection string was updated
+    - echo "=== Checking Sensitive Variables ==="
+    - |
+      if [ -n "$EMAIL_API" ]; then
+        echo "✅ EMAIL_API is set (length: ${#EMAIL_API})"
+      else
+        echo "❌ EMAIL_API is not set"
+      fi
+
+    - echo "=== Checking appsettings.json ==="
     - cat appsettings.json
 
     # . at then end: is used the current directory to look for the Dockerfile...
