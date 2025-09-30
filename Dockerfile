@@ -24,6 +24,9 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 # Copy published app
 COPY --from=publish /app/publish .
 
+# Copy Templates directory for SMTP email templates
+COPY Templates/ ./Templates/
+
 # Change ownership of the app directory
 RUN chown -R appuser:appuser /app
 
