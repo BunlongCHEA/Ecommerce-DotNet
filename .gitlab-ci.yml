@@ -41,7 +41,7 @@ build:
     # Verify the connection string was updated
     - cat appsettings.json
 
-    # . at then end: is used the current directory to look for the Dockerfile
+    # . at then end: is used the current directory to look for the Dockerfile...
     - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA -t $CI_REGISTRY_IMAGE:latest .
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
     - docker push $CI_REGISTRY_IMAGE:latest
