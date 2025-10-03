@@ -6,10 +6,12 @@ using Microsoft.EntityFrameworkCore;
 public class ProductService : IProductService
 {
     private readonly ApplicationDbContext _context;
+    private readonly ICloudStorageService _cloudStorageService;
 
-    public ProductService(ApplicationDbContext context)
+    public ProductService(ApplicationDbContext context, ICloudStorageService cloudStorageService)
     {
         _context = context;
+        _cloudStorageService = cloudStorageService;
     }
 
     public async Task<ActionResult<IEnumerable<Product>>> GetProducts(
@@ -159,7 +161,7 @@ public class ProductService : IProductService
         return new OkObjectResult(product);
     }
 
-    public async Task<ActionResult<Product>> CreateProduct(Product product, string userId)
+    public async Task<ActionResult<Product>> CreateProduct(Product product, string userId, IFormFile imageFile)
     {
         if (product == null || string.IsNullOrEmpty(product.Name))
         {
@@ -170,6 +172,21 @@ public class ProductService : IProductService
             return new BadRequestObjectResult("Invalid product price. Price must be greater than 0.");
         }
 
+        // Handle image upload if provided
+        if (imageFile != null && imageFile.Length > 0)
+        {
+            var fileName = $"{Guid.NewGuid()}_{imageFile.FileName}";
+            try
+            {
+                var imageUrl = await _cloudStorageService.UploadImageAsync(imageFile, fileName);
+                product.ImageUrl = imageUrl;
+            }
+            catch (Exception ex)
+            {
+                return new BadRequestObjectResult($"Failed to upload image: {ex.Message}");
+            }
+        }
+
         _context.Products.Add(product);
         await _context.SaveChangesAsync();
         return new CreatedAtActionResult(nameof(GetProduct), nameof(Product), new { id = product.Id }, product);
@@ -177,7 +194,7 @@ public class ProductService : IProductService
 
     // PUT: api/product/{id}
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateProduct(int id, Product product, string userId)
+    public async Task<IActionResult> UpdateProduct(int id, Product product, string userId, IFormFile imageFile)
     {
         if (id != product.Id || string.IsNullOrEmpty(product.Name))
         {
@@ -188,7 +205,42 @@ public class ProductService : IProductService
             return new BadRequestObjectResult("Invalid product price. Price must be greater than 0.");
         }
 
-        _context.Entry(product).State = EntityState.Modified;
+        var existingProduct = await _context.Products.FindAsync(id);
+        if (existingProduct == null)
+        {
+            return new NotFoundObjectResult($"Product with ID {id} not found.");
+        }
+
+        // Handle image upload if new image is provided
+        if (imageFile != null && imageFile.Length > 0)
+        {
+            // Delete old image if exists
+            if (!string.IsNullOrEmpty(existingProduct.ImageUrl))
+            {
+                var oldFileName = Path.GetFileName(new Uri(existingProduct.ImageUrl).LocalPath);
+                await _cloudStorageService.DeleteImageAsync(oldFileName);
+            }
+
+            // Upload new image
+            var fileName = $"{Guid.NewGuid()}_{imageFile.FileName}";
+            try
+            {
+                var imageUrl = await _cloudStorageService.UploadImageAsync(imageFile, fileName);
+                product.ImageUrl = imageUrl;
+            }
+            catch (Exception ex)
+            {
+                return new BadRequestObjectResult($"Failed to upload image: {ex.Message}");
+            }
+        }
+        else
+        {
+            // Keep existing image URL if no new image provided
+            product.ImageUrl = existingProduct.ImageUrl;
+        }
+
+        // _context.Entry(product).State = EntityState.Modified;
+        _context.Entry(existingProduct).CurrentValues.SetValues(product);
         await _context.SaveChangesAsync();
         return new ContentResult
         {
@@ -205,6 +257,14 @@ public class ProductService : IProductService
         {
             return new NotFoundObjectResult($"Product with ID {id} not found.");
         }
+
+        // Delete associated image from cloud storage
+        if (!string.IsNullOrEmpty(product.ImageUrl))
+        {
+            var fileName = Path.GetFileName(new Uri(product.ImageUrl).LocalPath);
+            await _cloudStorageService.DeleteImageAsync(fileName);
+        }
+
         _context.Products.Remove(product);
         await _context.SaveChangesAsync();
         return new ContentResult

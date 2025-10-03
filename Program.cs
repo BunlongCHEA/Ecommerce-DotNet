@@ -71,6 +71,9 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
+// Cloud Storage Service (Google Cloud Storage, AWS S3, DigitalOcean, etc.)
+builder.Services.AddScoped<ICloudStorageService, CloudStorageService>();
+
 // Add Services and its implementations
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IOrderItemService, OrderItemService>();
@@ -176,7 +179,24 @@ builder.Services.AddSwaggerGen(c =>
 // Add Health Checks
 builder.Services.AddHealthChecks();
 
+// *** Build the app
 var app = builder.Build();
+
+// Test cloud storage connection on startup (optional)
+using (var scope = app.Services.CreateScope())
+{
+    var cloudStorage = scope.ServiceProvider.GetRequiredService<ICloudStorageService>();
+    var connectionTest = await cloudStorage.TestConnectionAsync();
+    
+    if (!connectionTest)
+    {
+        Console.WriteLine("WARNING: Could not connect to cloud storage");
+    }
+    else
+    {
+        Console.WriteLine("✅ Cloud storage connection successful");
+    }
+}
 
 // Use forwarded headers (important for GKE with Google-managed SSL)
 app.UseForwardedHeaders();

@@ -50,8 +50,9 @@ namespace EcommerceAPI.Controllers
         }
 
         // POST: api/admin/product
+        // Product product
         [HttpPost]
-        public async Task<ActionResult<Product>> CreateProduct(Product product)
+        public async Task<ActionResult<Product>> CreateProduct([FromForm] ProductDto productDto)
         {
             // Find the logged-in userId
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -60,12 +61,26 @@ namespace EcommerceAPI.Controllers
                 return Unauthorized("User not authenticated or valid.");
             }
 
-            return await _productService.CreateProduct(product, userId);
+            // Convert DTO to Product entity
+            var product = new Product
+            {
+                Name = productDto.Name,
+                Description = productDto.Description,
+                Price = productDto.Price,
+                CategoryId = productDto.CategoryId,
+                SubCategoryId = productDto.SubCategoryId,
+                CouponId = productDto.CouponId,
+                StoreId = productDto.StoreId,
+                EventId = productDto.EventId
+            };
+
+            return await _productService.CreateProduct(product, userId, productDto.ImageFile);
         }
 
         // PUT: api/admin/product/{id}
+        // Product product
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateProduct(int id, Product product)
+        public async Task<IActionResult> UpdateProduct(int id, [FromForm] ProductDto productDto)
         {
             // Find the logged-in userId
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -74,7 +89,21 @@ namespace EcommerceAPI.Controllers
                 return Unauthorized("User not authenticated or valid.");
             }
 
-            return await _productService.UpdateProduct(id, product, userId);
+            // Convert DTO to Product entity
+            var product = new Product
+            {
+                Id = id,
+                Name = productDto.Name,
+                Description = productDto.Description,
+                Price = productDto.Price,
+                CategoryId = productDto.CategoryId,
+                SubCategoryId = productDto.SubCategoryId,
+                CouponId = productDto.CouponId,
+                StoreId = productDto.StoreId,
+                EventId = productDto.EventId
+            };
+
+            return await _productService.UpdateProduct(id, product, userId, productDto.ImageFile);
         }
 
         // DELETE: api/admin/product/{id}

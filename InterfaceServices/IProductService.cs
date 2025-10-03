@@ -13,8 +13,8 @@ public interface IProductService
         int? eventId = null
     );
     Task<ActionResult<Product>> GetProduct(int id);
-    Task<ActionResult<Product>> CreateProduct(Product product, string userId);
-    Task<IActionResult> UpdateProduct(int id, Product product, string userId);
+    Task<ActionResult<Product>> CreateProduct(Product product, string userId, IFormFile imageFile);
+    Task<IActionResult> UpdateProduct(int id, Product product, string userId, IFormFile imageFile);
     Task<IActionResult> DeleteProduct(int id, string userId);
     Task<ActionResult<IEnumerable<Product>>> CreateBatchProducts(IEnumerable<Product> products, string userId);
 }
