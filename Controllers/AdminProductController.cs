@@ -3,6 +3,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace EcommerceAPI.Controllers
 {
@@ -121,8 +122,12 @@ namespace EcommerceAPI.Controllers
         }
 
         // POST: api/admin/product/batch
+        // IEnumerable<Product> products
+        // IEnumerable<ProductDto> productDtos
+        // [FromForm] IEnumerable<ProductDto> productDtos
+        // [ModelBinder(typeof(ProductBatchModelBinder))] List<ProductDto> productDtos
         [HttpPost("batch")]
-        public async Task<ActionResult<IEnumerable<Product>>> CreateBatchProducts(IEnumerable<Product> products)
+        public async Task<ActionResult<IEnumerable<Product>>> CreateBatchProducts()
         {
             // Find the logged-in userId
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -131,8 +136,74 @@ namespace EcommerceAPI.Controllers
                 return Unauthorized("User not authenticated or valid.");
             }
 
-            var result = await _productService.CreateBatchProducts(products, userId);
-            return Ok(result);
+            try
+            {
+                var form = Request.Form;
+                
+                // Debug: Log all form keys
+                Console.WriteLine("=== Form Data Debug ===");
+                Console.WriteLine($"Form keys: {string.Join(", ", form.Keys)}");
+                Console.WriteLine($"File keys: {string.Join(", ", form.Files.Select(f => f.Name))}");
+                
+                var productsJson = form["products"].FirstOrDefault();
+                
+                if (string.IsNullOrEmpty(productsJson))
+                {
+                    Console.WriteLine("No products JSON found in form data");
+                    return BadRequest("Products data is required.");
+                }
+
+                Console.WriteLine($"Products JSON: {productsJson}");
+
+                var productDtos = JsonSerializer.Deserialize<List<ProductDto>>(productsJson, new JsonSerializerOptions 
+                { 
+                    PropertyNameCaseInsensitive = true 
+                });
+
+                if (productDtos == null || !productDtos.Any())
+                {
+                    return BadRequest("Product list cannot be null or empty.");
+                }
+
+                Console.WriteLine($"Deserialized {productDtos.Count} products");
+
+                // Match files with products
+                for (int i = 0; i < productDtos.Count; i++)
+                {
+                    var fileKey = $"files[{i}]";
+                    var matchedFile = form.Files.FirstOrDefault(f => f.Name == fileKey);
+                    if (matchedFile != null)
+                    {
+                        productDtos[i].ImageFile = matchedFile;
+                        Console.WriteLine($"Matched file {fileKey} to product {i}: {productDtos[i].Name} - File: {productDtos[i].ImageFile.FileName} ({productDtos[i].ImageFile.Length} bytes)");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"No file found for key {fileKey}");
+                    }
+                }
+
+                // Log each product DTO for debugging
+                for (int i = 0; i < productDtos.Count; i++)
+                {
+                    var dto = productDtos[i];
+                    Console.WriteLine($"Product {i}: Name={dto.Name}, Price={dto.Price}, ImageFile={dto.ImageFile?.FileName ?? "NULL"}, Size={dto.ImageFile?.Length ?? 0}");
+                }
+
+                var result = await _productService.CreateBatchProducts(productDtos, userId);
+                return result;
+            }
+            catch (System.Text.Json.JsonException jsonEx)
+            {
+                Console.WriteLine($"JSON Deserialization Error: {jsonEx.Message}");
+                return BadRequest($"Invalid JSON format: {jsonEx.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Controller Exception: {ex.Message}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+                return StatusCode(500, "An error occurred while creating products. Please try again.");
+            }
         }
     }
 }

@@ -21,7 +21,7 @@ public class Product : BaseEntity  // Inherit from BaseEntity
     public string? Description { get; set; }
 
     [Required]
-    [StringLength(200)]
+    [StringLength(255)]
     public string? ImageUrl { get; set; }
 
     public int CategoryId { get; set; }

@@ -16,5 +16,6 @@ public interface IProductService
     Task<ActionResult<Product>> CreateProduct(Product product, string userId, IFormFile imageFile);
     Task<IActionResult> UpdateProduct(int id, Product product, string userId, IFormFile imageFile);
     Task<IActionResult> DeleteProduct(int id, string userId);
-    Task<ActionResult<IEnumerable<Product>>> CreateBatchProducts(IEnumerable<Product> products, string userId);
+    // Task<ActionResult<IEnumerable<Product>>> CreateBatchProducts(IEnumerable<Product> products, string userId);
+    Task<ActionResult<IEnumerable<Product>>> CreateBatchProducts(IEnumerable<ProductDto> productDtos, string userId);
 }

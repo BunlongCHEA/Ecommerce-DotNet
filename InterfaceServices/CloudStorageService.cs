@@ -62,6 +62,8 @@ public class CloudStorageService : ICloudStorageService
 
     public async Task<string> UploadImageAsync(IFormFile file, string fileName)
     {
+        _logger.LogInformation("Starting upload for file: {FileName}, Size: {Size} bytes", fileName, file.Length);
+    
         try
         {
             // Validate file
@@ -69,6 +71,8 @@ public class CloudStorageService : ICloudStorageService
             {
                 throw new ArgumentException("File is null or empty");
             }
+
+            _logger.LogInformation("File validation passed for: {FileName}", fileName);
 
             // Validate file type
             var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp" };
@@ -84,8 +88,12 @@ public class CloudStorageService : ICloudStorageService
                 throw new ArgumentException($"File size exceeds maximum allowed size of {maxSizeBytes / (1024 * 1024)}MB");
             }
 
+            _logger.LogInformation("Starting Google Cloud upload for: {FileName}", fileName);
+
             using var stream = file.OpenReadStream();
             var objectName = $"products/{fileName}";
+
+            _logger.LogInformation("Uploading to bucket: {BucketName}, objectName: {ObjectName}", _bucketName, objectName);
 
             // Upload the file
             var uploadedObject = await _storageClient.UploadObjectAsync(
@@ -95,6 +103,8 @@ public class CloudStorageService : ICloudStorageService
                 source: stream,
                 options: null,
                 cancellationToken: CancellationToken.None);
+
+            _logger.LogInformation("Upload completed for: {FileName}", fileName);
 
             // Set cache control after upload
             try
@@ -108,7 +118,7 @@ public class CloudStorageService : ICloudStorageService
                 // Continue execution as this is not critical
             }
 
-             _logger.LogInformation("Image uploaded successfully: {FileName} -> {ObjectName}", fileName, objectName);
+            _logger.LogInformation("Image uploaded successfully: {FileName} -> {ObjectName}", fileName, objectName);
 
             // Option 1: Make object public and return public URL
             var isPublic = await MakeObjectPublicAsync(objectName);
@@ -123,7 +133,7 @@ public class CloudStorageService : ICloudStorageService
             var SignedUrl = await GenerateSignedUrlAsync(objectName, TimeSpan.FromDays(365));
             // var imageUrl = GetImageUrl(objectName);
             _logger.LogInformation("Generated signed URL: {SignedUrl}", SignedUrl);
-            
+
             return SignedUrl;
         }
         catch (Exception ex)
@@ -229,77 +239,88 @@ public class CloudStorageService : ICloudStorageService
         return $"https://storage.googleapis.com/{_bucketName}/{objectName}";
     }
 
-        
     // public string GetImageUrl(string fileName)
     // {
     //     var objectName = fileName.StartsWith("products/") ? fileName : $"products/{fileName}";
     //     return $"{_baseUrl}/{_bucketName}/{objectName}";
     // }
 
-    // Generate a signed URL for uploading a file directly from client (PUT method)
-    /// <param name="fileName">The file name to upload</param>
-    /// <param name="contentType">The content type of the file</param>
-    /// <param name="duration">How long the upload URL should be valid (default: 15 minutes)</param>
-    /// <returns>Signed URL for uploading</returns>
-    public async Task<string> GenerateUploadSignedUrlAsync(string fileName, string contentType, TimeSpan? duration = null)
+
+    // --- Batch Operations ---
+    
+    // Upload multiple images and return their URLs (signed URLs with 1 year expiration)
+    /// <param name="imageFiles">Dictionary where key is the unique identifier and value is the image file</param>
+    /// <returns>Dictionary where key is the identifier and value is the image URL</returns>
+    public async Task<Dictionary<string, string>> UploadBatchImagesAsync(Dictionary<string, IFormFile> imageFiles)
     {
-        try
+        _logger.LogInformation("Starting batch upload for {Count} files", imageFiles.Count);
+
+        var results = new Dictionary<string, string>();
+        var uploadTasks = new List<Task>();
+
+        foreach (var kvp in imageFiles)
         {
-            var objectName = $"products/{fileName}";
-            var urlDuration = duration ?? TimeSpan.FromMinutes(15); // Short duration for uploads
+            var identifier = kvp.Key;
+            var file = kvp.Value;
 
-            var urlSigner = UrlSigner.FromCredential(_credential);
+            _logger.LogInformation("Preparing upload for {Identifier}: {FileName}, Size: {Size} bytes, ContentType: {ContentType}", identifier, file.FileName, file.Length, file.ContentType);
 
-            // Generate signed URL for PUT (upload)
-            var signedUrl = await urlSigner.SignAsync(
-                _bucketName,
-                objectName,
-                urlDuration,
-                HttpMethod.Put);
-
-            _logger.LogInformation("Generated upload signed URL for: {FileName}, expires in: {Duration}",
-                fileName, urlDuration);
-            return signedUrl;
+            uploadTasks.Add(Task.Run(async () =>
+            {
+                try
+                {
+                    // Validate file before upload
+                    if (file == null || file.Length == 0)
+                    {
+                        _logger.LogWarning("File is null or empty for identifier: {Identifier}", identifier);
+                        lock (results)
+                        {
+                            results[identifier] = string.Empty;
+                        }
+                        return;
+                    }
+                    
+                    // Generate unique filename
+                    var fileName = $"{Guid.NewGuid()}_{file.FileName}";
+                    var imageUrl = await UploadImageAsync(file, fileName);
+                    
+                    lock (results)
+                    {
+                        results[identifier] = imageUrl;
+                    }
+      
+                    _logger.LogInformation("Batch upload SUCCESS - {Identifier} -> URL: {ImageUrl}", 
+                    identifier, imageUrl);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Batch upload - Failed to upload image for identifier: {Identifier}", identifier);
+                    lock (results)
+                    {
+                        results[identifier] = string.Empty; // Mark as failed
+                    }
+                }
+            }));
         }
-        catch (Exception ex)
+
+        await Task.WhenAll(uploadTasks);
+
+        var successCount = results.Count(r => !string.IsNullOrEmpty(r.Value));
+        _logger.LogInformation("Batch upload completed. Successfully uploaded: {SuccessCount}/{TotalCount}", 
+            successCount, results.Count);
+
+        // Log each result for debugging
+        foreach (var result in results)
         {
-            _logger.LogError(ex, "Failed to generate upload signed URL for: {FileName}", fileName);
-            throw;
+            _logger.LogInformation("Final result - {Key}: {Value}", result.Key, 
+                string.IsNullOrEmpty(result.Value) ? "FAILED" : "SUCCESS");
         }
+        
+        return results;
     }
 
-    // Generate a signed URL for uploading a file directly from client using POST method
-    // This is useful for HTML form uploads
-    /// <param name="fileName">The file name to upload</param>
-    /// <param name="contentType">The content type of the file</param>
-    /// <param name="duration">How long the upload URL should be valid (default: 15 minutes)</param>
-    /// <returns>Signed URL for uploading via POST</returns>
-    public async Task<string> GeneratePostUploadSignedUrlAsync(string fileName, string contentType, TimeSpan? duration = null)
-    {
-        try
-        {
-            var objectName = $"products/{fileName}";
-            var urlDuration = duration ?? TimeSpan.FromMinutes(15);
 
-            var urlSigner = UrlSigner.FromCredential(_credential);
-
-            // Generate signed URL for POST (form upload)
-            var signedUrl = await urlSigner.SignAsync(
-                _bucketName,
-                objectName,
-                urlDuration,
-                HttpMethod.Post);
-
-            _logger.LogInformation("Generated POST upload signed URL for: {FileName}, expires in: {Duration}",
-                fileName, urlDuration);
-            return signedUrl;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to generate POST upload signed URL for: {FileName}", fileName);
-            throw;
-        }
-    }
+    // --- Test Connection ---
 
     public async Task<bool> TestConnectionAsync()
     {

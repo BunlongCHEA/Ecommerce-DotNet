@@ -4,4 +4,5 @@ public interface ICloudStorageService
     Task<bool> DeleteImageAsync(string fileName);
     // string GetImageUrl(string fileName);
     Task<bool> TestConnectionAsync();
+    Task<Dictionary<string, string>> UploadBatchImagesAsync(Dictionary<string, IFormFile> imageFiles);
 }

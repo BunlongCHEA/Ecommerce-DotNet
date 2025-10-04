@@ -7,11 +7,14 @@ public class ProductService : IProductService
 {
     private readonly ApplicationDbContext _context;
     private readonly ICloudStorageService _cloudStorageService;
+    private readonly ILogger<ProductService> _logger;
+    public string _defaultImageUrl = "https://png.pngtree.com/png-vector/20221125/ourmid/pngtree-no-image-available-icon-flatvector-illustration-thumbnail-graphic-illustration-vector-png-image_40966590.jpg"; // Default image URL if none provided
 
-    public ProductService(ApplicationDbContext context, ICloudStorageService cloudStorageService)
+    public ProductService(ApplicationDbContext context, ICloudStorageService cloudStorageService, ILogger<ProductService> logger)
     {
         _context = context;
         _cloudStorageService = cloudStorageService;
+        _logger = logger;
     }
 
     public async Task<ActionResult<IEnumerable<Product>>> GetProducts(
@@ -274,30 +277,131 @@ public class ProductService : IProductService
             StatusCode = 200
         };
     }
-
-    public async Task<ActionResult<IEnumerable<Product>>> CreateBatchProducts(IEnumerable<Product> products, string userId)
+    
+    public async Task<ActionResult<IEnumerable<Product>>> CreateBatchProducts(IEnumerable<ProductDto> productDtos, string userId)
     {
-        if (products == null || !products.Any())
+        if (productDtos == null || !productDtos.Any())
         {
-            return new BadRequestObjectResult("Product list cannot be null or empty.");
+            return new BadRequestObjectResult("Product list cannot be null, empty or mismatch.");
         }
-        
-        // Validate all products
-        foreach (var product in products)
+
+        var products = new List<Product>();
+        var imageUploadTasks = new Dictionary<string, IFormFile>();
+
+        // Validate all products and prepare image uploads
+        int index = 0;
+        foreach (var productDto in productDtos)
         {
-            if (string.IsNullOrEmpty(product.Name))
+            if (string.IsNullOrEmpty(productDto.Name))
             {
                 return new BadRequestObjectResult("Product name cannot be empty");
             }
 
-            if (product.Price <= 0)
+            if (productDto.Price <= 0)
             {
-                return new BadRequestObjectResult($"Invalid price for product '{product.Name}'. Price must be greater than 0.");
+                return new BadRequestObjectResult($"Invalid price for product '{productDto.Name}'. Price must be greater than 0.");
+            }
+
+            // If there's an image file, add it to upload tasks
+            if (productDto.ImageFile != null)
+            {
+                imageUploadTasks[$"product_{index}"] = productDto.ImageFile;
+                _logger.LogInformation("Prepared image for upload for product '{ProductName}'", productDto.Name);
+            }
+
+            // Convert DTO to Product entity
+            var product = new Product
+            {
+                Name = productDto.Name,
+                Price = productDto.Price,
+                Description = productDto.Description,
+                ImageUrl = string.Empty, // Will be set after image upload
+                CategoryId = productDto.CategoryId,
+                SubCategoryId = productDto.SubCategoryId,
+                CouponId = productDto.CouponId,
+                StoreId = productDto.StoreId,
+                EventId = productDto.EventId
+            };
+
+            products.Add(product);
+            index++;
+        }
+
+        // Upload all images in batch
+        Dictionary<string, string> uploadResults = new Dictionary<string, string>();
+        if (imageUploadTasks.Any())
+        {
+            try
+            {
+                uploadResults = await _cloudStorageService.UploadBatchImagesAsync(imageUploadTasks);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to upload batch images");
+                return new BadRequestObjectResult("Failed to upload one or more images. Please try again.");
             }
         }
 
-        await _context.Products.AddRangeAsync(products);
-        await _context.SaveChangesAsync();
-        return new OkObjectResult(products);
+        // Set image URLs for products
+        for (int i = 0; i < products.Count; i++)
+        {
+            var key = $"product_{i}";
+            if (uploadResults.ContainsKey(key) && !string.IsNullOrEmpty(uploadResults[key]))
+            {
+                products[i].ImageUrl = uploadResults[key];
+                Console.WriteLine($"Uploaded image for product '{products[i].Name}': {products[i].ImageUrl}");
+            }
+            else
+            {
+                // Set default image or handle missing image
+                products[i].ImageUrl = _defaultImageUrl;
+            }
+
+            // Set audit fields from BaseEntity
+            // products[i].CreatedBy = userId;
+            // products[i].CreatedDate = DateTime.UtcNow;
+            // products[i].ModifiedBy = userId;
+            // products[i].ModifiedDate = DateTime.UtcNow;
+        }
+
+        try
+        {
+            await _context.Products.AddRangeAsync(products);
+            await _context.SaveChangesAsync();
+            
+            _logger.LogInformation("Successfully created {Count} products by user {UserId}", products.Count, userId);
+            return new OkObjectResult(products);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to save batch products to database");
+            return new BadRequestObjectResult("Failed to save products to database. Please try again.");
+        }
     }
+
+    // public async Task<ActionResult<IEnumerable<Product>>> CreateBatchProducts(IEnumerable<Product> products, string userId)
+    // {
+    //     if (products == null || !products.Any())
+    //     {
+    //         return new BadRequestObjectResult("Product list cannot be null or empty.");
+    //     }
+
+    //     // Validate all products
+    //     foreach (var product in products)
+    //     {
+    //         if (string.IsNullOrEmpty(product.Name))
+    //         {
+    //             return new BadRequestObjectResult("Product name cannot be empty");
+    //         }
+
+    //         if (product.Price <= 0)
+    //         {
+    //             return new BadRequestObjectResult($"Invalid price for product '{product.Name}'. Price must be greater than 0.");
+    //         }
+    //     }
+
+    //     await _context.Products.AddRangeAsync(products);
+    //     await _context.SaveChangesAsync();
+    //     return new OkObjectResult(products);
+    // }
 }
