@@ -39,6 +39,8 @@ build:
     - sed -i 's|ecommercevue.bunlong.site|ecommercevue.bunlong.site|g' Program.cs
     - sed -i 's|ecommerceapi.bunlong.site|ecommerceapi.bunlong.site|g' Program.cs
 
+    - sed -i 's|<Credential-cloud-storage>|$CREDENTIAL_CLOUD_STORAGE|g' appsettings.json
+
     # Verify the connection string was updated
     - echo "=== Checking Sensitive Variables ==="
     - |
