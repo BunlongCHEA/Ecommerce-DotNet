@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 public class Coupon : BaseEntity  // Inherit from BaseEntity
 {
@@ -24,6 +26,11 @@ public class Coupon : BaseEntity  // Inherit from BaseEntity
 
     [Range(0, int.MaxValue)]
     public int DurationValidity { get; set; } // Duration of validity in days
+
+    public int? EventId { get; set; }
+    [JsonIgnore]
+    [ValidateNever]
+    public Event? Event { get; set; } // Navigation property to Event
 
     public ICollection<Product>? Products { get; set; } // Navigation property to Products
     public ICollection<CouponUserList>? CouponUserLists { get; set; } // Navigation property to CouponUserLists

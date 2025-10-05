@@ -116,12 +116,21 @@ CancellationToken cancellationToken = default)
                 .WithMany(c => c.Products)
                 .HasForeignKey(p => p.CouponId);
 
-            modelBuilder.Entity<Product>()
-                .HasOne(p => p.Event)
-                .WithMany(e => e.Products)
-                .HasForeignKey(p => p.EventId);
-                // .OnDelete(DeleteBehavior.SetNull); // Set to null if the event is deleted
+            // modelBuilder.Entity<Product>()
+            //     .HasOne(p => p.Event)
+            //     .WithMany(e => e.Products)
+            //     .HasForeignKey(p => p.EventId)
+            //     .OnDelete(DeleteBehavior.SetNull); // Set to null if the event is deleted
 
+
+            // Configure the Event entity
+            modelBuilder.Entity<Event>()
+                .HasOne(e => e.Coupon)
+                .WithOne(c => c.Event)
+                .HasForeignKey<Coupon>(c => c.EventId)
+                .OnDelete(DeleteBehavior.SetNull); // Set to null if the event is deleted
+                
+            
             // Configure the CouponUserList entity
             modelBuilder.Entity<CouponUserList>()
                 .HasOne(c => c.Coupon)

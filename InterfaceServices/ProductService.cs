@@ -54,6 +54,7 @@ public class ProductService : IProductService
                 .Include(p => p.Category) // Include related category data
                 .Include(p => p.SubCategory) // Include related subcategory data
                 .Include(p => p.Coupon) // Include related coupon data
+                    .ThenInclude(c => c.Event) // Include related event data through coupon
                 .Include(p => p.Store) // Include related store data
                 .AsQueryable();
 
@@ -86,7 +87,8 @@ public class ProductService : IProductService
 
         if (eventId.HasValue)
         {
-            query = query.Where(p => p.EventId == eventId.Value);
+            query = query.Where(p => p.Coupon != null && p.Coupon.EventId == eventId.Value
+            );
         }
 
         // Get the total count of products for pagination from vue3
@@ -107,13 +109,20 @@ public class ProductService : IProductService
                         p.SubCategoryId,
                         p.CouponId,
                         p.StoreId,
-                        p.EventId,
-                        EventName = p.Event != null ? p.Event.Name : "No Event", // Get the event name
+                        EventId = p.Coupon != null ? p.Coupon.EventId : null, // Get EventId from Coupon relationship
+                        EventName = p.Coupon != null && p.Coupon.Event != null ? p.Coupon.Event.Name : "No Event", // Get event name from Coupon → Event relationship
                         CouponCode = p.Coupon != null ? p.Coupon.Code : "No Coupon", // Get the coupon code
                         DiscountPercentage = p.Coupon != null ? p.Coupon.DiscountPercentage : 0, // Get the discount percentage
                         StoreName = p.Store != null ? p.Store.Name : "Unknown", // Get the store name
                         CategoryName = p.Category != null ? p.Category.Name : "Unknown", // Get the category name
                         SubCategoryName = p.SubCategory != null ? p.SubCategory.Name : "Unknown", // Get the subcategory name
+
+                        // Additional coupon/event information
+                        CouponIsActive = p.Coupon != null ? p.Coupon.IsActive : false,
+                        CouponStartDate = p.Coupon != null ? p.Coupon.StartDate : null,
+                        CouponDurationValidity = p.Coupon != null ? p.Coupon.DurationValidity : 0,
+                        EventStartDate = p.Coupon != null && p.Coupon.Event != null ? p.Coupon.Event.StartDate : null,
+                        EventEndDate = p.Coupon != null && p.Coupon.Event != null ? p.Coupon.Event.EndDate : null
                     })
                     .ToListAsync();
 
@@ -136,6 +145,7 @@ public class ProductService : IProductService
                                     .Include(p => p.Category) // Include related category data
                                     .Include(p => p.SubCategory) // Include related subcategory data
                                     .Include(p => p.Coupon) // Include related coupon data
+                                        .ThenInclude(c => c.Event) // Include related event data through coupon
                                     .Include(p => p.Store) // Include related store data
                                     .Select(p => new
                                     {
@@ -148,13 +158,22 @@ public class ProductService : IProductService
                                         p.SubCategoryId,
                                         p.CouponId,
                                         p.StoreId,
-                                        p.EventId,
-                                        EventName = p.Event != null ? p.Event.Name : "No Event", // Get the event name
+                                        EventId = p.Coupon != null ? p.Coupon.EventId : null, // Get EventId from Coupon relationship
+                                        EventName = p.Coupon != null && p.Coupon.Event != null ? p.Coupon.Event.Name : "No Event", // Get event name from Coupon → Event relationship
                                         CouponCode = p.Coupon != null ? p.Coupon.Code : "No Coupon", // Get the coupon code
                                         DiscountPercentage = p.Coupon != null ? p.Coupon.DiscountPercentage : 0, // Get the discount percentage
                                         StoreName = p.Store != null ? p.Store.Name : "Unknown", // Get the store name
                                         CategoryName = p.Category != null ? p.Category.Name : "Unknown", // Get the category name
                                         SubCategoryName = p.SubCategory != null ? p.SubCategory.Name : "Unknown", // Get the subcategory name
+                                        
+                                        // Additional information
+                                        CouponIsActive = p.Coupon != null ? p.Coupon.IsActive : false,
+                                        CouponStartDate = p.Coupon != null ? p.Coupon.StartDate : null,
+                                        CouponDurationValidity = p.Coupon != null ? p.Coupon.DurationValidity : 0,
+                                        EventStartDate = p.Coupon != null && p.Coupon.Event != null ? p.Coupon.Event.StartDate : null,
+                                        EventEndDate = p.Coupon != null && p.Coupon.Event != null ? p.Coupon.Event.EndDate : null,
+                                        EventDescription = p.Coupon != null && p.Coupon.Event != null ? p.Coupon.Event.Description : null,
+                                        EventImageUrl = p.Coupon != null && p.Coupon.Event != null ? p.Coupon.Event.ImageUrl : null
                                     })
                                     .FirstOrDefaultAsync(p => p.Id == id);
         if (product == null)
@@ -320,7 +339,7 @@ public class ProductService : IProductService
                 SubCategoryId = productDto.SubCategoryId,
                 CouponId = productDto.CouponId,
                 StoreId = productDto.StoreId,
-                EventId = productDto.EventId
+                // EventId = productDto.EventId
             };
 
             products.Add(product);

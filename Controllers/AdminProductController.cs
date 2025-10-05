@@ -72,7 +72,7 @@ namespace EcommerceAPI.Controllers
                 SubCategoryId = productDto.SubCategoryId,
                 CouponId = productDto.CouponId,
                 StoreId = productDto.StoreId,
-                EventId = productDto.EventId
+                // EventId = productDto.EventId
             };
 
             // Get IFormFile from base64 or existing file
@@ -104,7 +104,7 @@ namespace EcommerceAPI.Controllers
                 SubCategoryId = productDto.SubCategoryId,
                 CouponId = productDto.CouponId,
                 StoreId = productDto.StoreId,
-                EventId = productDto.EventId
+                // EventId = productDto.EventId
             };
 
             var imageFile = productDto.GetImageFile();

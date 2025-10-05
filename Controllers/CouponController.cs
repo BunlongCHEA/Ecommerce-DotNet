@@ -34,6 +34,7 @@ namespace EcommerceAPI.Controllers
                                 c.IsActive,
                                 c.StartDate,
                                 c.DurationValidity,
+                                c.EventId,
                             })
                             .FirstOrDefaultAsync();
                 if (coupon == null)
@@ -65,6 +66,7 @@ namespace EcommerceAPI.Controllers
                                         c.IsActive,
                                         c.StartDate,
                                         c.DurationValidity,
+                                        c.EventId,
                                     })
                                     .FirstOrDefaultAsync();
                 if (couponDetails == null)

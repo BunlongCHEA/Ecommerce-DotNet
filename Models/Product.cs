@@ -44,10 +44,10 @@ public class Product : BaseEntity  // Inherit from BaseEntity
     [ValidateNever]
     public Store? Store { get; set; }   // Navigation property to Store
 
-    public int? EventId { get; set; }
-    [JsonIgnore]
-    [ValidateNever]
-    public Event? Event { get; set; } // Navigation property to Event
+    // public int? EventId { get; set; }
+    // [JsonIgnore]
+    // [ValidateNever]
+    // public Event? Event { get; set; } // Navigation property to Event
 
     public ICollection<OrderItem>? OrderItems { get; set; } // Collection of OrderItems associated with the product
 }

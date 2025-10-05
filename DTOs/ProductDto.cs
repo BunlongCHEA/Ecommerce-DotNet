@@ -25,7 +25,7 @@ public class ProductDto
     public int SubCategoryId { get; set; }
     public int? CouponId { get; set; }
     public int StoreId { get; set; }
-    public int? EventId { get; set; }
+    // public int? EventId { get; set; }
 
     // Helper method to convert base64 to IFormFile
     public IFormFile? GetImageFile()

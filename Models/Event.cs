@@ -21,5 +21,7 @@ public class Event : BaseEntity  // Inherit from BaseEntity
 
     public string? Description { get; set; } // Optional description of the event
 
-    public ICollection<Product>? Products { get; set; } // Navigation property to Products associated with the event
+    // public ICollection<Product>? Products { get; set; } // Navigation property to Products associated with the event
+    // public ICollection<Coupon>? Coupons { get; set; } // Navigation property to Coupons associated with the event
+    public Coupon? Coupon { get; set; } // One-to-one navigation property to Coupon
 }
