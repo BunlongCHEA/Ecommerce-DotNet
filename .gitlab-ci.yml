@@ -15,7 +15,7 @@ variables:
 
 stages:
   - build
-  # - deploy
+  - deploy
 
 # Build and Push Docker Image
 build:
@@ -29,9 +29,13 @@ build:
     - echo "SENDGRID_FROMEMAIL = $EMAIL_FROMEMAIL"
   script:
     # Update appsettings.json with production connection string
-    - sed -i 's|Server=DESKTOP-CQSN3MN\\SQLSERVERDEV2022;Database=Ecommerce;User Id=sa;Password=12345;TrustServerCertificate=True|Server=mssql-service,1433;Database=Ecommerce;User Id=sa;Password=YourStrong@Password123!;TrustServerCertificate=True|g' appsettings.json
+    - sed -i 's|Server=<server>|Server=$SQLSERVER_IP|g' appsettings.json
+    - sed -i 's|Database=<db>|Database=$SQLSERVER_DB|g' appsettings.json
+    # - sed -i 's|User Id=<user>|User Id=$SQLSERVER_USER|g' appsettings.json
+    - sed -i 's|Password=<password>|Password=$SQLSERVER_PASSWORD|g' appsettings.json
 
-    - sed -i 's|mongodb+srv://cbunlong168_db_user:ooyZ1lqtgsz27dPG@clusterlocal.12eysnm.mongodb.net/?retryWrites=true&w=majority&appName=ClusterLocal|mongodb://admin:RootPassword123@mongodb-service.production.svc.cluster.local:27017/MongoDB?authSource=admin|g' appsettings.json
+    # Update MongoDB connection string to use the internal Kubernetes service
+    - sed -i 's|mongodb+srv://<mongodb_user>|mongodb://$MONGO_USER:$MONGO_PASSWORD@mongodb-service.production.svc.cluster.local:27017/MongoDB?authSource=admin|g' appsettings.json
 
     - sed -i "s|SendGrid_API_Key|$EMAIL_API|g" appsettings.json
     - sed -i "s|SendGrid_FromEmail|$EMAIL_FROMEMAIL|g" appsettings.json
@@ -61,73 +65,44 @@ build:
     - main
     - develop
 
-  # Deploy SQL Server Database
-# deploy-sql-server:
-#   stage: deploy
-#   image: google/cloud-sdk:alpine
-#   before_script:
-#     - echo $GCP_SERVICE_ACCOUNT_KEY | base64 -d > /tmp/gcp-key.json
-#     - gcloud auth activate-service-account --key-file /tmp/gcp-key.json
-#     - gcloud config set project $GCP_PROJECT_ID
-#     - gcloud container clusters get-credentials $GKE_CLUSTER_NAME --zone $GKE_CLUSTER_ZONE --project $GCP_PROJECT_ID
-#     - kubectl config set-context --current --namespace=$KUBE_NAMESPACE
-#   script:
-#     - kubectl apply -f Deploy/k8s/db/
-#     - kubectl rollout status deployment/sql-server -n $KUBE_NAMESPACE --timeout=300s
-#   when: manual
-#   only:
-#     - main
-#     - develop
+# Deploy app & database to GKE using kubectl & ArgoCD
+deploy:
+  stage: deploy
+  image: google/cloud-sdk:alpine
+  before_script:
+    # Decode base64 and create temporary JSON file
+    - echo $GCP_SERVICE_ACCOUNT_KEY | base64 -d > /tmp/gcp-key.json
+    # Authenticate gcloud CLI with the service account
+    - gcloud auth activate-service-account --key-file /tmp/gcp-key.json
+    # Set the GCP project context, [MASK] from GitLab Variables
+    - gcloud config set project $GCP_PROJECT_ID
+    # Get GKE cluster credentials for kubectl
+    - gcloud container clusters get-credentials $GKE_CLUSTER_NAME --zone $GKE_CLUSTER_ZONE
+    # Download and setup kubectl binary, version v1.34.1 is released September 9, 2025
+    - curl -sSL -o /usr/local/bin/kubectl https://dl.k8s.io/release/v1.34.1/bin/linux/amd64/kubectl
+    - chmod +x /usr/local/bin/kubectl
+  script:
+    # Create namespace if it doesn't exist
+    - kubectl create namespace production --dry-run=client -o yaml | kubectl apply -f -
 
-# # Deploy MongoDB
-# deploy-mongodb:
-#   stage: deploy
-#   image: google/cloud-sdk:alpine
-#   before_script:
-#     - echo $GCP_SERVICE_ACCOUNT_KEY | base64 -d > /tmp/gcp-key.json
-#     - gcloud auth activate-service-account --key-file /tmp/gcp-key.json
-#     - gcloud config set project $GCP_PROJECT_ID
-#     - gcloud container clusters get-credentials $GKE_CLUSTER_NAME --zone $GKE_CLUSTER_ZONE --project $GCP_PROJECT_ID
-#     - kubectl config set-context --current --namespace=$KUBE_NAMESPACE
-#   script:
-#     - kubectl apply -f Deploy/k8s/nosql/
-#     - kubectl rollout status deployment/mongodb -n $KUBE_NAMESPACE --timeout=300s
-#   when: manual
-#   only:
-#     - main
-#     - develop
+    # Apply ArgoCD app & DB manifests
+    - kubectl apply -f Deploy/k8s/argocd/db/
+    - kubectl apply -f Deploy/k8s/argocd/app
 
-# # Deploy to Kubernetes
-# deploy_production:
-#   stage: deploy
-#   image: bitnami/kubectl:latest
-#   before_script:
-#     - echo $KUBE_CONFIG | base64 -d > $KUBECONFIG
-#     - kubectl config use-context $KUBECONTEXT
-#   script:
-#     # Update image tag in ArgoCD application manifest
-#     - kubectl patch application aspnet-ecommerce -n argocd --type='merge' -p='{"spec":{"source":{"helm":{"parameters":[{"name":"image.repository","value":"'$CI_REGISTRY_IMAGE'"},{"name":"image.tag","value":"'$CI_COMMIT_SHA'"}]}}}}'
-    
-#     # Trigger ArgoCD sync (optional - ArgoCD can auto-sync)
-#     - kubectl patch application aspnet-ecommerce -n argocd --type='merge' -p='{"operation":{"sync":{"revision":"HEAD"}}}'
-    
-#     # Wait for sync to complete
-#     - kubectl wait --for=condition=Synced application/aspnet-ecommerce -n argocd --timeout=300s
-    
-#     # Verify deployment in $KUBE_NAMESPACE namespace
-#     - kubectl get pods -n $KUBE_NAMESPACE -l app=aspnet-app
-
-#     # Check TLS certificate status
-#     - kubectl get certificate -n $KUBE_NAMESPACE
-#     - kubectl describe certificate aspnet-tls-secret -n $KUBE_NAMESPACE
-
-#     # Display service URLs
-#     - echo "📱 API Base URL: https://$DOMAIN"
-#     - echo "📖 Swagger UI: https://$DOMAIN/swagger"
-#     - echo "🔒 TLS Certificate: $(kubectl get certificate aspnet-tls-secret -n $KUBE_NAMESPACE -o jsonpath='{.status.conditions[0].status}')"
-#   environment:
-#     name: $KUBE_NAMESPACE
-#     url: https://$DOMAIN
-#   when: manual
-#   only:
-#     - main
+    # Optionally, trigger sync immediately; -n argocd: namespace where ArgoCD is installed, use for store metadata of db & application, but actual build is in production namespace
+    - |
+      if kubectl get application sql-server -n argocd >/dev/null 2>&1; then
+        kubectl patch application sql-server -n argocd --type merge -p '{"operation":{"sync":{"syncStrategy":{"sync":{}}}}}' || true
+      fi
+    - |
+      if kubectl get application aspnet-ecommerce -n argocd >/dev/null 2>&1; then
+        kubectl patch application aspnet-ecommerce -n argocd --type merge -p '{"operation":{"sync":{"syncStrategy":{"sync":{}}}}}' || true
+      fi
+    - |
+      if kubectl get application mongodb -n argocd >/dev/null 2>&1; then
+        kubectl patch application mongodb -n argocd --type merge -p '{"operation":{"sync":{"syncStrategy":{"sync":{}}}}}' || true
+      fi
+  when: manual
+  only:
+    - main
+    - develop

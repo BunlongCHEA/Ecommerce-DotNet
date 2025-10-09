@@ -107,12 +107,12 @@ metadata:
   namespace: production
 type: Opaque
 data:
-  # Username: admin (base64 encoded)
+  # Username:
   mongodb-username: YWRtaW4=
-  # Password: SecurePassword123 (base64 encoded)
-  mongodb-password: U2VjdXJlUGFzc3dvcmQxMjM=
-  # Root password: RootPassword123 (base64 encoded)
-  mongodb-root-password: Um9vdFBhc3N3b3JkMTIz
+  # Password:
+  mongodb-password: aDgxZVZYaVpEVzZGM2RT
+  # Root password:
+  mongodb-root-password: MDdRbVJhMVJZclAzb3E0
 
 ---
 # MongoDB Persistent Volume Claim For Storage

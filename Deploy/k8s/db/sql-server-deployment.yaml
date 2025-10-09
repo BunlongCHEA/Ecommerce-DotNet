@@ -119,7 +119,7 @@ metadata:
   namespace: production
 type: Opaque
 data:
-  SA_PASSWORD: WW91clN0cm9uZ0BQYXNzd29yZDEyMyE= # Base64 encoded: YourStrong@Password123!
+  SA_PASSWORD: M3M5ZkRiN1B2U2xZdVp2
 
 ---
 # SQL Server Network Policy
