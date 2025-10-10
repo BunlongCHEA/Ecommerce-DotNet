@@ -28,7 +28,7 @@ build:
     - echo "SENDGRID_API_KEY = $EMAIL_API"
     - echo "SENDGRID_FROMEMAIL = $EMAIL_FROMEMAIL"
     # Install Python3 in the docker image
-    - apk add --no-cache python3
+    # - apk add --no-cache python3
     # # Export the connection string as environment variable
     - export CONNECTION_STRING_B64=$(echo -n "Server=$SQLSERVER_IP,1433;Database=Ecommerce;User Id=sa;Password=$SQLSERVER_PASSWORD;TrustServerCertificate=True" | base64)
     - echo "✅ CONNECTION_STRING_B64 generated (length -- ${#CONNECTION_STRING_B64})"
@@ -36,34 +36,34 @@ build:
     # Update appsettings.json with production connection string
     - sed -i "s|Server=<server>|Server=$SQLSERVER_IP,1433;Database=Ecommerce;User Id=sa;Password=$SQLSERVER_PASSWORD;TrustServerCertificate=True|g" appsettings.json
 
-    # Use Python for safe base64 replacement
-    - |
-      python3 -c "
-      import os
+    # # Use Python for safe base64 replacement
+    # - |
+    #   python3 -c "
+    #   import os
       
-      file_path = 'Deploy/k8s/app/aspnet-app-deployment.yaml'
+    #   file_path = 'Deploy/k8s/app/aspnet-app-deployment.yaml'
       
-      # Read the file
-      with open(file_path, 'r') as f:
-          content = f.read()
+    #   # Read the file
+    #   with open(file_path, 'r') as f:
+    #       content = f.read()
       
-      # Replace the placeholder
-      content = content.replace('<connection-string-base64>', os.environ['CONNECTION_STRING_B64'])
+    #   # Replace the placeholder
+    #   content = content.replace('<connection-string-base64>', os.environ['CONNECTION_STRING_B64'])
       
-      # Write back to file
-      with open(file_path, 'w') as f:
-          f.write(content)
+    #   # Write back to file
+    #   with open(file_path, 'w') as f:
+    #       f.write(content)
       
-      print('✅ Connection string replaced successfully')
-      "
+    #   print('✅ Connection string replaced successfully')
+    #   "
     
-    # Verify variables
-    - |
-      if [ -n "$CONNECTION_STRING_B64" ]; then
-        echo "✅ CONNECTION_STRING_B64 is set (length: ${#CONNECTION_STRING_B64})"
-      else
-        echo "❌ CONNECTION_STRING_B64 is not set"
-      fi
+    # # Verify variables
+    # - |
+    #   if [ -n "$CONNECTION_STRING_B64" ]; then
+    #     echo "✅ CONNECTION_STRING_B64 is set (length: ${#CONNECTION_STRING_B64})"
+    #   else
+    #     echo "❌ CONNECTION_STRING_B64 is not set"
+    #   fi
 
     # Update MongoDB connection string to use the internal Kubernetes service
     - sed -i "s|mongodb+srv://<mongodb_user>|mongodb://admin:$MONGO_PASSWORD@mongodb-service.production.svc.cluster.local:27017/MongoDB?authSource=admin|g" appsettings.json

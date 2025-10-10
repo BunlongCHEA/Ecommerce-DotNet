@@ -113,7 +113,7 @@ metadata:
   namespace: production
 type: Opaque
 data:
-  ConnectionStrings__DefaultConnection: <connection-string-base64>
+  ConnectionStrings__DefaultConnection: U2VydmVyPW1zc3FsLXNlcnZpY2UsMTQzMztEYXRhYmFzZT1FY29tbWVyY2U7VXNlciBJZD1zYTtQYXNzd29yZD0zczlmRGI3UHZTbFl1WnY7VHJ1c3RTZXJ2ZXJDZXJ0aWZpY2F0ZT1UcnVl
   # Base64 encoded:
   Jwt__Key: TFBCSGNVa1NPeTdiMWpsT3k5YSt2TU5qWW1ERU1KbUFaQ2tvU0krMVZCbz0=
 
