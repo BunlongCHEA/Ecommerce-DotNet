@@ -78,9 +78,11 @@ deploy:
     - gcloud config set project $GCP_PROJECT_ID
     # Get GKE cluster credentials for kubectl
     - gcloud container clusters get-credentials $GKE_CLUSTER_NAME --zone $GKE_CLUSTER_ZONE
+    # Install kubectl if not already available in the image
+    - gcloud components install kubectl
     # Download and setup kubectl binary, version v1.34.1 is released September 9, 2025
-    - curl -sSL -o /usr/local/bin/kubectl https://dl.k8s.io/release/v1.34.1/bin/linux/amd64/kubectl
-    - chmod +x /usr/local/bin/kubectl
+    # - curl -sSL -o /usr/local/bin/kubectl https://dl.k8s.io/release/v1.34.1/bin/linux/amd64/kubectl
+    # - chmod +x /usr/local/bin/kubectl
   script:
     # Create namespace if it doesn't exist
     - kubectl create namespace production --dry-run=client -o yaml | kubectl apply -f -
