@@ -31,7 +31,7 @@ build:
     # Update appsettings.json with production connection string
     - sed -i "s|Server=<server>|Server=$SQLSERVER_IP,1433;Database=Ecommerce;User Id=sa;Password=$SQLSERVER_PASSWORD;TrustServerCertificate=True|g" appsettings.json
 
-    - sed -i "s/<connection-string-base64>/$(echo -n "Server=$SQLSERVER_IP,1433;Database=Ecommerce;User Id=sa;Password=$SQLSERVER_PASSWORD;TrustServerCertificate=True" | base64)/g" Deploy/k8s/app/aspnet-app-deployment.yaml
+    - sed -i "s#<connection-string-base64>#$(echo -n "Server=$SQLSERVER_IP,1433;Database=Ecommerce;User Id=sa;Password=$SQLSERVER_PASSWORD;TrustServerCertificate=True" | base64)#g" Deploy/k8s/app/aspnet-app-deployment.yaml
 
     # Update MongoDB connection string to use the internal Kubernetes service
     - sed -i "s|mongodb+srv://<mongodb_user>|mongodb://admin:$MONGO_PASSWORD@mongodb-service.production.svc.cluster.local:27017/MongoDB?authSource=admin|g" appsettings.json
