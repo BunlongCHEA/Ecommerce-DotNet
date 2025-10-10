@@ -34,15 +34,34 @@ build:
     # Update appsettings.json with production connection string
     - sed -i "s|Server=<server>|Server=$SQLSERVER_IP,1433;Database=Ecommerce;User Id=sa;Password=$SQLSERVER_PASSWORD;TrustServerCertificate=True|g" appsettings.json
 
-    # Use here document to avoid delimiter conflicts
+    # Use Python for safe base64 replacement
     - |
-      cat > temp_replacement.sh << 'EOF'
-      #!/bin/bash
-      sed -i "s/<connection-string-base64>/${CONNECTION_STRING_B64}/g" Deploy/k8s/app/aspnet-app-deployment.yaml
-      EOF
-      chmod +x temp_replacement.sh
-      ./temp_replacement.sh
-      rm temp_replacement.sh
+      python3 -c "
+      import os
+      
+      file_path = 'Deploy/k8s/app/aspnet-app-deployment.yaml'
+      
+      # Read the file
+      with open(file_path, 'r') as f:
+          content = f.read()
+      
+      # Replace the placeholder
+      content = content.replace('<connection-string-base64>', os.environ['CONNECTION_STRING_B64'])
+      
+      # Write back to file
+      with open(file_path, 'w') as f:
+          f.write(content)
+      
+      print('✅ Connection string replaced successfully')
+      "
+    
+    # Verify variables
+    - |
+      if [ -n "$CONNECTION_STRING_B64" ]; then
+        echo "✅ CONNECTION_STRING_B64 is set (length: ${#CONNECTION_STRING_B64})"
+      else
+        echo "❌ CONNECTION_STRING_B64 is not set"
+      fi
 
     # Update MongoDB connection string to use the internal Kubernetes service
     - sed -i "s|mongodb+srv://<mongodb_user>|mongodb://admin:$MONGO_PASSWORD@mongodb-service.production.svc.cluster.local:27017/MongoDB?authSource=admin|g" appsettings.json
