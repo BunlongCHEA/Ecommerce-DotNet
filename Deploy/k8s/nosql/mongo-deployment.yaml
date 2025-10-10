@@ -108,7 +108,7 @@ metadata:
 type: Opaque
 data:
   # Username:
-  mongodb-username: YWRtaW4=
+  mongodb-username: bW9uZ29fYWRtaW4=
   # Password:
   mongodb-password: aDgxZVZYaVpEVzZGM2RT
   # Root password:
