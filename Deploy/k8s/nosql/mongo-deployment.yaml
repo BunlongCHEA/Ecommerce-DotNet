@@ -139,7 +139,7 @@ metadata:
   labels:
     app: mongodb
 spec:
-  type: LoadBalancer
+  type: ClusterIP # LoadBalancer
   selector:
     app: mongodb
   ports:
