@@ -29,10 +29,7 @@ build:
     - echo "SENDGRID_FROMEMAIL = $EMAIL_FROMEMAIL"
   script:
     # Update appsettings.json with production connection string
-    - sed -i "s|Server=<server>|Server=$SQLSERVER_IP|g" appsettings.json
-    - sed -i "s|Database=<db>|Database=$SQLSERVER_DB|g" appsettings.json
-    # - sed -i "s|User Id=<user>|User Id=$SQLSERVER_USER|g" appsettings.json
-    - sed -i "s|Password=<password>|Password=$SQLSERVER_PASSWORD|g" appsettings.json
+    - sed -i "s|Server=<server>|Server=$SQLSERVER_IP,1433;Database=Ecommerce;User Id=sa;Password=$SQLSERVER_PASSWORD;TrustServerCertificate=True|g" appsettings.json
 
     # Update MongoDB connection string to use the internal Kubernetes service
     - sed -i "s|mongodb+srv://<mongodb_user>|mongodb://admin:$MONGO_PASSWORD@mongodb-service.production.svc.cluster.local:27017/MongoDB?authSource=admin|g" appsettings.json
