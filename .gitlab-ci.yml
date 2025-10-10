@@ -42,7 +42,7 @@ build:
     - sed -i "s|ecommercevue.bunlong.site|ecommercevue.bunlong.site|g" Program.cs
     - sed -i "s|ecommerceapi.bunlong.site|ecommerceapi.bunlong.site|g" Program.cs
 
-    # Verify the connection string was updated
+    # Verify the connection string was updated correctly
     - echo "=== Checking Sensitive Variables ==="
     - |
       if [ -n "$EMAIL_API" ]; then
