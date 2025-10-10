@@ -107,8 +107,8 @@ metadata:
   namespace: production
 type: Opaque
 data:
-  # Username:
-  mongodb-username: bW9uZ29fYWRtaW4=
+  # Username: admin
+  mongodb-username: YWRtaW4=
   # Password:
   mongodb-password: aDgxZVZYaVpEVzZGM2RT
   # Root password:
