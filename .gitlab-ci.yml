@@ -29,21 +29,21 @@ build:
     - echo "SENDGRID_FROMEMAIL = $EMAIL_FROMEMAIL"
   script:
     # Update appsettings.json with production connection string
-    - sed -i 's|Server=<server>|Server=$SQLSERVER_IP|g' appsettings.json
-    - sed -i 's|Database=<db>|Database=$SQLSERVER_DB|g' appsettings.json
-    # - sed -i 's|User Id=<user>|User Id=$SQLSERVER_USER|g' appsettings.json
-    - sed -i 's|Password=<password>|Password=$SQLSERVER_PASSWORD|g' appsettings.json
+    - sed -i "s|Server=<server>|Server=$SQLSERVER_IP|g" appsettings.json
+    - sed -i "s|Database=<db>|Database=$SQLSERVER_DB|g" appsettings.json
+    # - sed -i "s|User Id=<user>|User Id=$SQLSERVER_USER|g" appsettings.json
+    - sed -i "s|Password=<password>|Password=$SQLSERVER_PASSWORD|g" appsettings.json
 
     # Update MongoDB connection string to use the internal Kubernetes service
-    - sed -i 's|mongodb+srv://<mongodb_user>|mongodb://$MONGO_USER:$MONGO_PASSWORD@mongodb-service.production.svc.cluster.local:27017/MongoDB?authSource=admin|g' appsettings.json
+    - sed -i "s|mongodb+srv://<mongodb_user>|mongodb://$MONGO_USER:$MONGO_PASSWORD@mongodb-service.production.svc.cluster.local:27017/MongoDB?authSource=admin|g" appsettings.json
 
     - sed -i "s|SendGrid_API_Key|$EMAIL_API|g" appsettings.json
     - sed -i "s|SendGrid_FromEmail|$EMAIL_FROMEMAIL|g" appsettings.json
 
-    - sed -i 's|ecommercevue.bunlong.site|ecommercevue.bunlong.site|g' Program.cs
-    - sed -i 's|ecommerceapi.bunlong.site|ecommerceapi.bunlong.site|g' Program.cs
+    - sed -i "s|<Credential-cloud-storage>|$CREDENTIAL_CLOUD_STORAGE|g" appsettings.json
 
-    - sed -i 's|<Credential-cloud-storage>|$CREDENTIAL_CLOUD_STORAGE|g' appsettings.json
+    - sed -i "s|ecommercevue.bunlong.site|ecommercevue.bunlong.site|g" Program.cs
+    - sed -i "s|ecommerceapi.bunlong.site|ecommerceapi.bunlong.site|g" Program.cs
 
     # Verify the connection string was updated
     - echo "=== Checking Sensitive Variables ==="
@@ -52,6 +52,13 @@ build:
         echo "✅ EMAIL_API is set (length: ${#EMAIL_API})"
       else
         echo "❌ EMAIL_API is not set"
+      fi
+
+    - |
+      if [ -n "$CREDENTIAL_CLOUD_STORAGE" ]; then
+        echo "✅ CREDENTIAL_CLOUD_STORAGE is set (length: ${#CREDENTIAL_CLOUD_STORAGE})"
+      else
+        echo "❌ CREDENTIAL_CLOUD_STORAGE is not set"
       fi
 
     - echo "=== Checking appsettings.json ==="
