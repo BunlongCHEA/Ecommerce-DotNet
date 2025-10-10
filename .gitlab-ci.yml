@@ -29,7 +29,7 @@ build:
     - echo "SENDGRID_FROMEMAIL = $EMAIL_FROMEMAIL"
   script:
     # Update appsettings.json with production connection string
-    - sed -i "s|Server=<server>|Server=$SQLSERVER_IP,1433;Database=Ecommerce;User Id=sa;Password=3s9fDb7PvSlYuZv;TrustServerCertificate=True|g" appsettings.json
+    - sed -i "s|Server=<server>|Server=$SQLSERVER_IP,1433;Database=Ecommerce;User Id=sa;Password=$SQLSERVER_PASSWORD;TrustServerCertificate=True|g" appsettings.json
 
     # Update MongoDB connection string to use the internal Kubernetes service
     - sed -i "s|mongodb+srv://<mongodb_user>|mongodb://admin:$MONGO_PASSWORD@mongodb-service.production.svc.cluster.local:27017/MongoDB?authSource=admin|g" appsettings.json
@@ -42,7 +42,7 @@ build:
     - sed -i "s|ecommercevue.bunlong.site|ecommercevue.bunlong.site|g" Program.cs
     - sed -i "s|ecommerceapi.bunlong.site|ecommerceapi.bunlong.site|g" Program.cs
 
-    # Verify the connection string was updated correctly
+    # Verify the connection string was updated
     - echo "=== Checking Sensitive Variables ==="
     - |
       if [ -n "$EMAIL_API" ]; then
@@ -69,7 +69,7 @@ build:
     - main
     - develop
 
-# Deploy app & database to GKE using kubectl & ArgoCD --
+# Deploy app & database to GKE using kubectl & ArgoCD
 deploy:
   stage: deploy
   image: google/cloud-sdk:alpine
