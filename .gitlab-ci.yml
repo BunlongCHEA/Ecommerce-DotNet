@@ -27,6 +27,8 @@ build:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
     - echo "SENDGRID_API_KEY = $EMAIL_API"
     - echo "SENDGRID_FROMEMAIL = $EMAIL_FROMEMAIL"
+    # Install Python3 in the docker image
+    - apk add --no-cache python3
     # # Export the connection string as environment variable
     - export CONNECTION_STRING_B64=$(echo -n "Server=$SQLSERVER_IP,1433;Database=Ecommerce;User Id=sa;Password=$SQLSERVER_PASSWORD;TrustServerCertificate=True" | base64)
     - echo "✅ CONNECTION_STRING_B64 generated (length -- ${#CONNECTION_STRING_B64})"
