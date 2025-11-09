@@ -20,6 +20,8 @@ spec:
       - name: aspnet-app
         image: registry.gitlab.com/bunlongchea/ecommerce-dotnet:latest # Update with your registry
         imagePullPolicy: Always # Always pull the latest image
+        args:
+          - --allow-snippet-annotations=true
         ports:
         - containerPort: 8080
           name: http
@@ -106,20 +108,20 @@ data:
   ASPNETCORE_URLS: "http://+:8080"
   Jwt__Issuer: "https://ecommerceapi.bunlong.site"
 
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: proxy-headers-signalr
-  namespace: production
-data:
-  Connection: "upgrade"
-  Upgrade: "$http_upgrade"
-  X-Forwarded-For: "$proxy_add_x_forwarded_for"
-  X-Forwarded-Proto: "https"
-  X-Forwarded-Port: "443"
-  X-Real-IP: "$remote_addr"
-  Host: "$host"
+# ---
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: proxy-headers-signalr
+#   namespace: production
+# data:
+#   Connection: "upgrade"
+#   Upgrade: "$http_upgrade"
+#   X-Forwarded-For: "$proxy_add_x_forwarded_for"
+#   X-Forwarded-Proto: "https"
+#   X-Forwarded-Port: "443"
+#   X-Real-IP: "$remote_addr"
+#   Host: "$host"
 
 ---
 # ASP.NET Secrets
@@ -172,23 +174,23 @@ metadata:
     # WebSocket and SignalR specific configuration
     nginx.ingress.kubernetes.io/proxy-buffering: "off"
     nginx.ingress.kubernetes.io/upstream-hash-by: "$arg_id"
-    nginx.ingress.kubernetes.io/websocket-services: "aspnet-service"
+    # nginx.ingress.kubernetes.io/websocket-services: "aspnet-service"
 
-    # Connection settings for SignalR
-    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"       # Required for WebSocket
-    nginx.ingress.kubernetes.io/proxy-set-headers: "proxy-headers-signalr"
+    # # Connection settings for SignalR
+    # nginx.ingress.kubernetes.io/proxy-http-version: "1.1"       # Required for WebSocket
+    # nginx.ingress.kubernetes.io/proxy-set-headers: "proxy-headers-signalr"
     
-    # Backend protocol
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    # # Backend protocol
+    # nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     
-    # Keepalive settings
-    nginx.ingress.kubernetes.io/upstream-keepalive-timeout: "3600"
-    nginx.ingress.kubernetes.io/upstream-keepalive-requests: "10000"
+    # # Keepalive settings
+    # nginx.ingress.kubernetes.io/upstream-keepalive-timeout: "3600"
+    # nginx.ingress.kubernetes.io/upstream-keepalive-requests: "10000"
     
-    # # Add custom headers to pass Cloudflare info to application
-    # nginx.ingress.kubernetes.io/configuration-snippet: |
-    #   more_set_headers "X-Forwarded-Proto: https";
-    #   more_set_headers "X-Forwarded-Port: 443";
+    # Add custom headers to pass Cloudflare info to application
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Forwarded-Proto: https";
+      more_set_headers "X-Forwarded-Port: 443";
 spec:
   rules:
   - host: ecommerceapi.bunlong.site
