@@ -100,7 +100,7 @@ INSERT [dbo].[Products] ([Name], [Price], [Description], [ImageUrl], [CategoryId
 (N'Alienware 16 Area-51', CAST(3599.99 AS Decimal(20, 2)), N' Ultra-thin laptop with Intel i7 16GB RAM  1TB SSD for gaming', N'https://storage.googleapis.com/bunlong-ecommerce-bucket/products/b29b3059-1407-4dc0-8d2d-94fc536dacf9_Alienware_16_Area_51_1759509022244.jpg', 1, 1, 2, 6, GETUTCDATE(), GETUTCDATE()),
 (N'iPhone 17 Pro Max', CAST(1199.99 AS Decimal(20, 2)), N' Latest iPhone with A17 Pro chip  256GB storage', N'https://storage.googleapis.com/bunlong-ecommerce-bucket/products/d2805036-e80b-41c5-bd6b-6205e6b7ace7_iPhone_17_Pro_Max_1759509022248.jpg', 1, 2, 2, 6, GETUTCDATE(), GETUTCDATE()),
 (N'Nike Air Max Running', CAST(399.00 AS Decimal(20, 2)), N'Nike Air Max 95 Premium ''Denim Dark Obsidian Gum'' in Blue for Men', N'https://storage.googleapis.com/bunlong-ecommerce-bucket/products/ab18c9f7-a4d3-4723-910e-b5a6dbdca9a5_nike-BLUE-Air-Max-95-Premium-Denim-Dark-Obsidian-Gum.jpeg', 3, 6, NULL, 3, GETUTCDATE(), GETUTCDATE()),
-(N'Women Backpack Fashion', CAST(299.99 AS Decimal(20, 2)), N'Fashion backpack with laptop compartment for age in modern fashion', N'https://storage.googleapis.com/bunlong-ecommerce-bucket/products/10b9cbf0-2b16-4f18-a4c6-893365a6f40c_Women_Backpack_Fashion_1759576908400.jpg', 2, 5, 3, 7, GETUTCDATE(), GETUTCDATE())
+(N'Women Backpack Fashion', CAST(299.99 AS Decimal(20, 2)), N'Fashion backpack with brand stylist suitable for all ages in modern fashion', N'https://storage.googleapis.com/bunlong-ecommerce-bucket/products/10b9cbf0-2b16-4f18-a4c6-893365a6f40c_Women_Backpack_Fashion_1759576908400.jpg', 2, 5, 3, 7, GETUTCDATE(), GETUTCDATE())
 
 
 
