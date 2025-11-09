@@ -9,8 +9,8 @@ INSERT INTO [Categories] ([Name], [CreatedAt], [UpdatedAt]) VALUES
 ('Health & Beauty', '2025-01-15 10:20:00', '2025-01-15 10:20:00'),
 ('Books & Media', '2025-01-15 10:25:00', '2025-01-15 10:25:00'),
 ('Toys & Games', '2025-01-15 10:30:00', '2025-01-15 10:30:00'),
-('Automotive', '2025-01-15 10:35:00', '2025-01-15 10:35:00'),
-('Food & Beverages', '2025-01-15 10:40:00', '2025-01-15 10:40:00'),
+--('Automotive', '2025-01-15 10:35:00', '2025-01-15 10:35:00'),
+--('Food & Beverages', '2025-01-15 10:40:00', '2025-01-15 10:40:00'),
 ('Travel & Leisure', '2025-01-15 10:45:00', '2025-01-15 10:45:00');
 
 INSERT INTO [SubCategories] ([Name], [CreatedAt], [UpdatedAt]) VALUES
