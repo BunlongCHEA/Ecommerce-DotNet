@@ -106,20 +106,20 @@ data:
   ASPNETCORE_URLS: "http://+:8080"
   Jwt__Issuer: "https://ecommerceapi.bunlong.site"
 
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: proxy-headers-signalr
-  namespace: production
-data:
-  Connection: "upgrade"
-  Upgrade: "$http_upgrade"
-  X-Forwarded-For: "$proxy_add_x_forwarded_for"
-  X-Forwarded-Proto: "https"
-  X-Forwarded-Port: "443"
-  X-Real-IP: "$remote_addr"
-  Host: "$host"
+# ---
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: proxy-headers-signalr
+#   namespace: production
+# data:
+#   Connection: "upgrade"
+#   Upgrade: "$http_upgrade"
+#   X-Forwarded-For: "$proxy_add_x_forwarded_for"
+#   X-Forwarded-Proto: "https"
+#   X-Forwarded-Port: "443"
+#   X-Real-IP: "$remote_addr"
+#   Host: "$host"
 
 ---
 # ASP.NET Secrets
@@ -148,42 +148,29 @@ metadata:
     
     # Cloudflare specific annotations
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
-    
-    # Enable real IP forwarding from Cloudflare
-    nginx.ingress.kubernetes.io/enable-real-ip: "true"
-    nginx.ingress.kubernetes.io/real-ip-header: "X-Forwarded-For"
-    nginx.ingress.kubernetes.io/real-ip-recursive: "true"
     
     # CORS headers for Swagger and API   
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/cors-allow-origin: "https://ecommerceapi.bunlong.site,https://www.ecommerceapi.bunlong.site,https://ecommercevue.bunlong.site,https://www.ecommercevue.bunlong.site"
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Keep-Alive,Cache-Control,Content-Type,Range,Authorization,Accept,Origin,X-Forwarded-For,X-Forwarded-Proto,x-signalr-user-agent,x-requested-with,x-ms-request-id,connection,upgrade"
+    # nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Keep-Alive,Cache-Control,Content-Type,Range,Authorization,Accept,Origin,X-Forwarded-For,X-Forwarded-Proto,x-signalr-user-agent,x-requested-with,x-ms-request-id,connection,upgrade"
     nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
-    nginx.ingress.kubernetes.io/cors-max-age: "86400"
+    # nginx.ingress.kubernetes.io/cors-max-age: "86400"
 
     # SSL and security
     nginx.ingress.kubernetes.io/ssl-redirect: "false"  # Let Cloudflare handle HTTPS redirect
     nginx.ingress.kubernetes.io/force-ssl-redirect: "false"  # Let Cloudflare handle HTTPS redirect
 
-    # WebSocket and SignalR specific configuration
-    nginx.ingress.kubernetes.io/proxy-buffering: "off"
-    nginx.ingress.kubernetes.io/upstream-hash-by: "$arg_id"
-    # nginx.ingress.kubernetes.io/websocket-services: "aspnet-service"
-
-    # Connection settings for SignalR
-    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"       # Required for WebSocket
-    nginx.ingress.kubernetes.io/proxy-set-headers: "proxy-headers-signalr"
-    
-    # Backend protocol
+    # Use standard annotations instead of snippets
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-    
-    # Keepalive settings
-    nginx.ingress.kubernetes.io/upstream-keepalive-timeout: "3600"
-    nginx.ingress.kubernetes.io/upstream-keepalive-requests: "10000"
+    nginx.ingress.kubernetes.io/upstream-vhost: "ecommerceapi.bunlong.site"
+
+    # Add real IP forwarding (safer than snippets)
+    nginx.ingress.kubernetes.io/use-forwarded-headers: "true"
+    nginx.ingress.kubernetes.io/enable-real-ip: "true"
     
     # # Add custom headers to pass Cloudflare info to application
     # nginx.ingress.kubernetes.io/configuration-snippet: |
