@@ -60,11 +60,11 @@ spec:
           httpGet:
             path: /health
             port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: 15
+          periodSeconds: 5
           timeoutSeconds: 5
           successThreshold: 1
-          failureThreshold: 3
+          failureThreshold: 2
         livenessProbe:
           httpGet:
             path: /health
@@ -107,6 +107,21 @@ data:
   Jwt__Issuer: "https://ecommerceapi.bunlong.site"
 
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: proxy-headers-signalr
+  namespace: production
+data:
+  Connection: "upgrade"
+  Upgrade: "$http_upgrade"
+  X-Forwarded-For: "$proxy_add_x_forwarded_for"
+  X-Forwarded-Proto: "https"
+  X-Forwarded-Port: "443"
+  X-Real-IP: "$remote_addr"
+  Host: "$host"
+
+---
 # ASP.NET Secrets
 apiVersion: v1
 kind: Secret
@@ -133,8 +148,8 @@ metadata:
     
     # Cloudflare specific annotations
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
     
     # Enable real IP forwarding from Cloudflare
@@ -159,8 +174,16 @@ metadata:
     nginx.ingress.kubernetes.io/upstream-hash-by: "$arg_id"
     nginx.ingress.kubernetes.io/websocket-services: "aspnet-service"
 
-    # Custom headers
-    nginx.ingress.kubernetes.io/proxy-set-headers: "proxy-headers"
+    # Connection settings for SignalR
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"       # Required for WebSocket
+    nginx.ingress.kubernetes.io/proxy-set-headers: "proxy-headers-signalr"
+    
+    # Backend protocol
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    
+    # Keepalive settings
+    nginx.ingress.kubernetes.io/upstream-keepalive-timeout: "3600"
+    nginx.ingress.kubernetes.io/upstream-keepalive-requests: "10000"
     
     # # Add custom headers to pass Cloudflare info to application
     # nginx.ingress.kubernetes.io/configuration-snippet: |
