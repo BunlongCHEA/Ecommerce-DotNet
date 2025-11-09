@@ -148,13 +148,13 @@ metadata:
     
     # Cloudflare specific annotations
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
     
     # CORS headers for Swagger and API   
     nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-origin: "https://ecommerceapi.bunlong.site,https://www.ecommerceapi.bunlong.site,https://ecommercevue.bunlong.site,https://www.ecommercevue.bunlong.site"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://ecommercevue.bunlong.site,https://www.ecommercevue.bunlong.site"
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS, PATCH"
     nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Accept,Origin,X-SignalR-User-Agent,x-signalr-user-agent"
     # nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Keep-Alive,Cache-Control,Content-Type,Range,Authorization,Accept,Origin,X-Forwarded-For,X-Forwarded-Proto,x-signalr-user-agent,x-requested-with,x-ms-request-id,connection,upgrade"

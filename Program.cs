@@ -29,6 +29,8 @@ builder.Services.AddCors(options =>
                 "https://www.ecommercevue.bunlong.site", // www variant
                 "https://ecommerceapi.bunlong.site", // backend domain
                 "https://www.ecommerceapi.bunlong.site", // www variant
+                "wss://ecommerceapi.bunlong.site/chathub", // SignalR WebSocket
+                "wss://www.ecommerceapi.bunlong.site/chathub", // SignalR WebSocket www variant
                 "http://localhost:5173", // Development
                 "https://localhost:5173" // Development HTTPS
             )
