@@ -272,6 +272,65 @@ public class ChatService : IChatService
         }
     }
 
+    public async Task<List<ChatRoom?>> GetAdminSupportRoomsAsync()
+    {
+        try
+        {
+            // Get all chat rooms where seller is an admin
+            // Assuming StoreId = -1 or null for support rooms (based on your CreateSupportRoom logic)
+            var adminRooms = await _context.ChatRooms
+                .Include(r => r.Customer)
+                .Include(r => r.Seller)
+                .Include(r => r.Store)
+                .Include(r => r.Messages)
+                .Where(r => r.Seller.Role == "Admin" && (r.StoreId == -1 || r.StoreId == null))
+                .OrderByDescending(r => r.LastActivity)
+                .Select(r => new ChatRoom
+                {
+                    Id = r.Id,
+                    CustomerId = r.CustomerId,
+                    // CustomerName = (r.Customer.FirstName ?? "") + " " + (r.Customer.LastName ?? ""),
+                    SellerId = r.SellerId,
+                    // SellerName = (r.Seller.FirstName ?? "") + " " + (r.Seller.LastName ?? ""),
+                    StoreId = r.StoreId,
+                    // StoreName = r.Store != null ? r.Store.Name : "Support",
+                    LastActivity = r.LastActivity
+                    // LastMessage = r.Messages
+                    //     .OrderByDescending(m => m.Timestamp)
+                    //     .Select(m => m.Message)
+                    //     .FirstOrDefault() ?? "",
+                    // UnreadCount = r.Messages
+                    //     .Count(m => m.ReceiverId == r.SellerId && !m.IsRead)
+                })
+                .ToListAsync();
+
+            return adminRooms;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting admin support rooms");
+            throw;
+        }
+    }
+
+    public async Task<List<int>> GetAdminUserIdsAsync()
+    {
+        try
+        {
+            var adminIds = await _context.Users
+                .Where(u => u.Role == "Admin")
+                .Select(u => u.Id)
+                .ToListAsync();
+
+            return adminIds;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting admin user IDs");
+            throw;
+        }
+    }
+
     private string? ExtractUrlFromMessage(string message)
     {
         if (string.IsNullOrEmpty(message))

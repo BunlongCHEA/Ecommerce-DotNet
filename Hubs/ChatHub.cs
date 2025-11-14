@@ -71,7 +71,20 @@ public class ChatHub : Hub
                     hasImage = !string.IsNullOrEmpty(chatMessage.ImageId)
                 };
 
+                // Broadcast message to room
                 await Clients.Group($"ChatRoom_{roomId}").SendAsync("ReceiveMessage", messageResponse);
+
+                // Update unread count for receiver (if not currently in room)
+                var receiverUnreadCount = await _chatService.GetUnreadMessagesCountAsync(chatMessage.ReceiverId);
+                await Clients.Group($"User_{chatMessage.ReceiverId}").SendAsync("UnreadCountUpdate", receiverUnreadCount);
+
+                // Update admin rooms if receiver is not admin
+                var adminUsers = await _chatService.GetAdminUserIdsAsync(); // You need to implement this
+                foreach (var adminId in adminUsers)
+                {
+                    var rooms = await _chatService.GetAdminSupportRoomsAsync();
+                    await Clients.Group($"User_{adminId}").SendAsync("AdminRoomsUpdate", rooms);
+                }
             }
         }
         catch (Exception ex)
@@ -130,7 +143,21 @@ public class ChatHub : Hub
         try
         {
             await _chatService.MarkMessageAsReadAsync(int.Parse(messageId), userId.Value);
+
+            // Notify all clients that message was read
             await Clients.All.SendAsync("MessageRead", messageId);
+
+            // Update unread count for the user who read the message
+            var unreadCount = await _chatService.GetUnreadMessagesCountAsync(userId.Value);
+            await Clients.Group($"User_{userId}").SendAsync("UnreadCountUpdate", unreadCount);
+
+            // Update admin rooms
+            var adminUsers = await _chatService.GetAdminUserIdsAsync();
+            foreach (var adminId in adminUsers)
+            {
+                var rooms = await _chatService.GetAdminSupportRoomsAsync();
+                await Clients.Group($"User_{adminId}").SendAsync("AdminRoomsUpdate", rooms);
+            }
         }
         catch (Exception ex)
         {
@@ -173,6 +200,67 @@ public class ChatHub : Hub
             _logger.LogInformation($"User {userId} disconnected from SignalR");
         }
         await base.OnDisconnectedAsync(exception);
+    }
+
+    // Add these methods to your ChatHub class
+    public async Task SubscribeToUnreadCount()
+    {
+        var userId = GetCurrentUserId();
+        if (userId == null)
+        {
+            await Clients.Caller.SendAsync("Error", "Unauthorized access");
+            return;
+        }
+
+        try
+        {
+            // Get initial unread count
+            var unreadCount = await _chatService.GetUnreadMessagesCountAsync(userId.Value);
+            
+            // Send initial count to caller
+            await Clients.Caller.SendAsync("UnreadCountUpdate", unreadCount);
+            
+            _logger.LogInformation($"User {userId} subscribed to unread count updates");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error subscribing to unread count for user {userId}");
+            await Clients.Caller.SendAsync("Error", "Failed to subscribe to unread count");
+        }
+    }
+
+    public async Task GetAdminRoomsUpdate()
+    {
+        var userId = GetCurrentUserId();
+        if (userId == null)
+        {
+            await Clients.Caller.SendAsync("Error", "Unauthorized access");
+            return;
+        }
+
+        try
+        {
+            // Check if user is admin
+            var isAdmin = Context.User?.IsInRole("Admin") ?? false;
+            if (!isAdmin)
+            {
+                await Clients.Caller.SendAsync("Error", "Access denied - Admin only");
+                return;
+            }
+
+            // Get admin support rooms
+            var rooms = await _chatService.GetAdminSupportRoomsAsync();
+            
+            // Send rooms to caller
+            await Clients.Caller.SendAsync("AdminRoomsUpdate", rooms);
+            
+            _logger.LogInformation($"Admin {userId} received rooms update");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error getting admin rooms for user {userId}");
+            await Clients.Caller.SendAsync("Error", "Failed to get admin rooms");
+        }
     }
 
     private int? GetCurrentUserId()

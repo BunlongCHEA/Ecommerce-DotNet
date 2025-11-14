@@ -85,8 +85,8 @@ public class AdminController : ControllerBase
             // Create or get existing chat room
             // Using StoreId = 1 as default for support chats (you can modify this logic)
             var room = await _chatService.CreateOrGetChatRoomAsync(
-                currentUserId.Value, 
-                admin.Id, 
+                currentUserId.Value,
+                admin.Id,
                 currentUser?.StoreId ?? 1);
 
             var roomResponse = new
@@ -112,6 +112,28 @@ public class AdminController : ControllerBase
         {
             _logger.LogError(ex, "Error creating support room");
             return StatusCode(500, new { message = "Error creating support room" });
+        }
+    }
+
+    // Get unread message count for current user
+    [HttpGet("unread-count")]
+    public async Task<IActionResult> GetUnreadCount()
+    {
+        try
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized(new { message = "User not authenticated" });
+            }
+
+            var count = await _chatService.GetUnreadMessagesCountAsync(currentUserId.Value);
+            return Ok(new { unreadCount = count });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting unread count");
+            return StatusCode(500, new { message = "Error retrieving unread count" });
         }
     }
 
