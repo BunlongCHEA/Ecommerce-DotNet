@@ -283,7 +283,7 @@ public class ChatService : IChatService
                 .Include(r => r.Seller)
                 .Include(r => r.Store)
                 .Include(r => r.Messages)
-                .Where(r => r.Seller.Role == "Admin" && (r.StoreId == -1 || r.StoreId == null))
+                .Where(r => r.Seller.Role == "Admin" && (r.StoreId == 1 || r.StoreId == null))
                 .OrderByDescending(r => r.LastActivity)
                 .Select(r => new ChatRoom
                 {

@@ -249,7 +249,8 @@ public class ChatHub : Hub
             }
 
             // Get admin support rooms
-            var rooms = await _chatService.GetAdminSupportRoomsAsync();
+            // var rooms = await _chatService.GetAdminSupportRoomsAsync();
+            var rooms = await _chatService.GetUserChatRoomsAsync(userId.Value);
             
             // Send rooms to caller
             await Clients.Caller.SendAsync("AdminRoomsUpdate", rooms);
