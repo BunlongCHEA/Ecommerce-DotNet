@@ -1,3 +1,12 @@
+# Namespace (create first if not exists)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: production
+  labels:
+    name: production
+
+---
 # ASP.NET Core 9 Application Deployment
 apiVersion: apps/v1
 kind: Deployment
@@ -51,11 +60,11 @@ spec:
               key: Jwt__Issuer
         resources:
           requests:
-            memory: "512Mi"
-            cpu: "200m"
+            memory: "256Mi" # 1Gi, 512Mi, 256Mi
+            cpu: "100m"
           limits:
-            memory: "1Gi"
-            cpu: "1000m"
+            memory: "512Mi"
+            cpu: "500m"
         readinessProbe:
           httpGet:
             path: /health
@@ -73,6 +82,8 @@ spec:
           periodSeconds: 10
           timeoutSeconds: 5
           failureThreshold: 3
+      # imagePullSecrets:
+      # - name: gitlab-registry-secret  # For private GitLab registry
       restartPolicy: Always
 
 ---
@@ -106,21 +117,6 @@ data:
   ASPNETCORE_URLS: "http://+:8080"
   Jwt__Issuer: "https://ecommerceapi.bunlong.site"
 
-# ---
-# apiVersion: v1
-# kind: ConfigMap
-# metadata:
-#   name: proxy-headers-signalr
-#   namespace: production
-# data:
-#   Connection: "upgrade"
-#   Upgrade: "$http_upgrade"
-#   X-Forwarded-For: "$proxy_add_x_forwarded_for"
-#   X-Forwarded-Proto: "https"
-#   X-Forwarded-Port: "443"
-#   X-Real-IP: "$remote_addr"
-#   Host: "$host"
-
 ---
 # ASP.NET Secrets
 apiVersion: v1
@@ -135,6 +131,85 @@ data:
   Jwt__Key: TFBCSGNVa1NPeTdiMWpsT3k5YSt2TU5qWW1ERU1KbUFaQ2tvU0krMVZCbz0=
 
 ---
+# Traefik Middleware for CORS
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: cors-headers
+  namespace: production
+spec:
+  headers:
+    accessControlAllowMethods:
+      - "GET"
+      - "POST"
+      - "PUT"
+      - "DELETE"
+      - "OPTIONS"
+      - "PATCH"
+    accessControlAllowHeaders:
+      - "DNT"
+      - "Keep-Alive"
+      - "User-Agent"
+      - "X-Requested-With"
+      - "If-Modified-Since"
+      - "Cache-Control"
+      - "Content-Type"
+      - "Range"
+      - "Authorization"
+      - "Accept"
+      - "Origin"
+      - "X-SignalR-User-Agent"
+      - "x-signalr-user-agent"
+    accessControlAllowOriginList:
+      - "https://ecommercevue.bunlong.site"
+      - "https://www.ecommercevue.bunlong.site"
+      - "https://ecommerceapi.bunlong.site"
+    accessControlAllowCredentials: true
+    accessControlMaxAge: 86400
+    addVaryHeader: true
+
+---
+# Traefik Middleware for Headers
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: secure-headers
+  namespace: production
+spec:
+  headers:
+    frameDeny: false
+    browserXssFilter: true
+    contentTypeNosniff: true
+    customRequestHeaders:
+      X-Forwarded-Proto: "https"
+      X-Forwarded-Port: "443"
+
+---
+# Traefik Middleware for request size (for file uploads)
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: body-size
+  namespace: production
+spec:
+  buffering:
+    maxRequestBodyBytes: 52428800  # 50MB
+
+---
+# Combined Middleware Chain
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: aspnet-chain
+  namespace: production
+spec:
+  chain:
+    middlewares:
+      - name: cors-headers
+      - name: secure-headers
+      - name: body-size
+
+---
 # Ingress for external access
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -142,45 +217,58 @@ metadata:
   name: aspnet-ingress
   namespace: production
   annotations:
-    # Use NGINX Ingress Controller
-    kubernetes.io/ingress.class: "nginx"
-    # nginx.ingress.kubernetes.io/ingress.class: "nginx"
+    # Use traefik Ingress Controller
+    kubernetes.io/ingress.class: "traefik"
+
+    # Let's Encrypt certificate
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+    # Traefik annotations
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+
+    # Apply middleware chain
+    traefik.ingress. kubernetes.io/router.middlewares: production-aspnet-chain@kubernetescrd
+
+    # # Use NGINX Ingress Controller
+    # kubernetes.io/ingress.class: "nginx"
+    # # nginx.ingress.kubernetes.io/ingress.class: "nginx"
     
-    # Cloudflare specific annotations
-    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+    # # Cloudflare specific annotations
+    # nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    # nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    # nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    # nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
     
-    # CORS headers for Swagger and API   
-    nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-origin: "https://ecommercevue.bunlong.site,https://www.ecommercevue.bunlong.site"
-    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Accept,Origin,X-SignalR-User-Agent,x-signalr-user-agent"
-    # nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Keep-Alive,Cache-Control,Content-Type,Range,Authorization,Accept,Origin,X-Forwarded-For,X-Forwarded-Proto,x-signalr-user-agent,x-requested-with,x-ms-request-id,connection,upgrade"
-    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
-    nginx.ingress.kubernetes.io/cors-max-age: "86400"
+    # # CORS headers for Swagger and API   
+    # nginx.ingress.kubernetes.io/enable-cors: "true"
+    # nginx.ingress.kubernetes.io/cors-allow-origin: "https://ecommercevue.bunlong.site,https://www.ecommercevue.bunlong.site"
+    # nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    # nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Accept,Origin,X-SignalR-User-Agent,x-signalr-user-agent"
+    # # nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Keep-Alive,Cache-Control,Content-Type,Range,Authorization,Accept,Origin,X-Forwarded-For,X-Forwarded-Proto,x-signalr-user-agent,x-requested-with,x-ms-request-id,connection,upgrade"
+    # nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    # nginx.ingress.kubernetes.io/cors-max-age: "86400"
 
-    # SSL and security
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"  # Let Cloudflare handle HTTPS redirect
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"  # Let Cloudflare handle HTTPS redirect
+    # # SSL and security
+    # nginx.ingress.kubernetes.io/ssl-redirect: "false"  # Let Cloudflare handle HTTPS redirect
+    # nginx.ingress.kubernetes.io/force-ssl-redirect: "false"  # Let Cloudflare handle HTTPS redirect
 
-    # Use standard annotations instead of snippets
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-    # nginx.ingress.kubernetes.io/upstream-vhost: "ecommerceapi.bunlong.site"
+    # # Use standard annotations instead of snippets
+    # nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    # # nginx.ingress.kubernetes.io/upstream-vhost: "ecommerceapi.bunlong.site"
 
-    # Add real IP forwarding (safer than snippets)
-    nginx.ingress.kubernetes.io/use-forwarded-headers: "true"
-    nginx.ingress.kubernetes.io/enable-real-ip: "true"
+    # # Add real IP forwarding (safer than snippets)
+    # nginx.ingress.kubernetes.io/use-forwarded-headers: "true"
+    # nginx.ingress.kubernetes.io/enable-real-ip: "true"
 
-    # Proxy headers for proper protocol detection
-    nginx.ingress.kubernetes.io/proxy-set-headers: "production/proxy-headers"
-    
-    # # Add custom headers to pass Cloudflare info to application
-    # nginx.ingress.kubernetes.io/configuration-snippet: |
-    #   more_set_headers "X-Forwarded-Proto: https";
-    #   more_set_headers "X-Forwarded-Port: 443";
+    # # Proxy headers for proper protocol detection
+    # nginx.ingress.kubernetes.io/proxy-set-headers: "production/proxy-headers"
 spec:
+  tls:
+  - hosts:
+    - ecommerceapi.bunlong.site
+    - www.ecommerceapi.bunlong.site
+    secretName: aspnet-tls-secret # cert-manager will create this secret
   rules:
   - host: ecommerceapi.bunlong.site
     http:
@@ -203,16 +291,16 @@ spec:
             port:
               number: 80
 
----
-# ConfigMap for proxy headers
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: proxy-headers
-  namespace: production
-data:
-  X-Forwarded-Proto: "https"
-  X-Forwarded-Port: "443"
-  X-Forwarded-For: "$proxy_add_x_forwarded_for"
-  X-Real-IP: "$remote_addr"
-  X-Scheme: "https"
+# ---
+# # ConfigMap for proxy headers
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: proxy-headers
+#   namespace: production
+# data:
+#   X-Forwarded-Proto: "https"
+#   X-Forwarded-Port: "443"
+#   X-Forwarded-For: "$proxy_add_x_forwarded_for"
+#   X-Real-IP: "$remote_addr"
+#   X-Scheme: "https"

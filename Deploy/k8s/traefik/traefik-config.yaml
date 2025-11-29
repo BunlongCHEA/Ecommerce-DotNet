@@ -1,0 +1,26 @@
+# Configure Traefik to expose TCP ports for databases
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    ports:
+      mssql:
+        port: 1433
+        expose: true
+        exposedPort: 1433
+        protocol: TCP
+      mongodb:
+        port: 27017
+        expose: true
+        exposedPort: 27017
+        protocol: TCP
+    additionalArguments:
+      - "--entrypoints.mssql.address=:1433/tcp"
+      - "--entrypoints. mongodb.address=:27017/tcp"
+    # Enable access logs for debugging
+    logs:
+      access:
+        enabled: true

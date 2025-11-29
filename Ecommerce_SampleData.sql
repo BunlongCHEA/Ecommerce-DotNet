@@ -55,7 +55,7 @@ INSERT INTO [ShipmentTypes] ([Type], [CreatedAt], [UpdatedAt]) VALUES
 ('Ground freight', GETUTCDATE(), GETUTCDATE());
 
 INSERT INTO [Stores] ([Name], [Latitude], [Longitude], [CreatedAt], [UpdatedAt]) VALUES
---('For_admin', 0.1, 0.1, '2025-01-15 14:00:00', '2025-01-15 14:00:00'),
+('For_admin', 0.1, 0.1, '2025-01-15 14:00:00', '2025-01-15 14:00:00'),
 ('TechHub Cambodia', 11.5564, 104.9282, '2025-01-15 14:00:00', '2025-01-15 14:00:00'),
 ('Fashion Central', 11.5449, 104.8922, '2025-01-15 14:05:00', '2025-01-15 14:05:00'),
 ('SportZone Pro', 11.5733, 104.8927, '2025-01-15 14:10:00', '2025-01-15 14:10:00'),

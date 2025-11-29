@@ -51,11 +51,11 @@ spec:
           value: "Express"
         resources:
           requests:
-            memory: "2Gi"
-            cpu: "500m"
+            memory: "512Mi" # 1Gi, 512Mi
+            cpu: "250m" # 500m, 250m
           limits:
-            memory: "3Gi"
-            cpu: "2000m"
+            memory: "1Gi"
+            cpu: "1000m"
         volumeMounts:
         - name: mssql-persistent-storage
           mountPath: /var/opt/mssql
@@ -84,14 +84,31 @@ metadata:
   labels:
     app: mssql
 spec:
-  type: LoadBalancer
+  type: ClusterIP # LoadBalancer - ClusterIP - NodePort
   selector:
     app: mssql
   ports:
   - port: 1433
     targetPort: 1433
+    # nodePort: 31433 # Access via <ip>:31433
     protocol: TCP
     name: mssql
+
+---
+# Traefik IngressRouteTCP for SQL Server external access
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: mssql-tcp-ingress
+  namespace: production
+spec:
+  entryPoints:
+    - mssql  # Need to configure this entrypoint in Traefik
+  routes:
+  - match: HostSNI(`*`)
+    services:
+    - name: mssql-service
+      port: 1433
 
 ---
 # SQL Server Persistent Volume Claim
@@ -107,8 +124,8 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 20Gi
-  storageClassName: standard-rwo  # do-block-storage on DigitalOcean - standard-rwo on GKE
+      storage: 10Gi
+  storageClassName: local-path  # do-block-storage on DigitalOcean - standard-rwo on GKE - local-path on k3s default storage
 
 ---
 # SQL Server Secrets
