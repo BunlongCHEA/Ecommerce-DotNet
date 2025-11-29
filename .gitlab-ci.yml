@@ -80,13 +80,19 @@ build:
 # Configure Traefik for TCP ports (SQL Server & MongoDB)
 infrastructure:
   stage: infrastructure
-  image: digitalocean/doctl:latest
+  image: 
+    name: digitalocean/doctl:latest
+    entrypoint: [""]  # Override the entrypoint to allow shell commands
   before_script:
     # Authenticate with DigitalOcean using API token
     - doctl auth init --access-token $DO_ACCESS_TOKEN
     
     # Get DigitalOcean Kubernetes cluster credentials for kubectl
     - doctl kubernetes cluster kubeconfig save $DO_CLUSTER_NAME
+
+    # Verify doctl installation
+    - doctl kubernetes cluster list
+    - doctl account get
     
     # Install kubectl if not already available in the image
     - |
@@ -176,13 +182,19 @@ infrastructure:
 # Deploy app & database to DOK using kubectl & ArgoCD
 deploy:
   stage: deploy
-  image: digitalocean/doctl:latest
+  image: 
+    name: digitalocean/doctl:latest
+    entrypoint: [""]  # Override the entrypoint to allow shell commands
   before_script:
     # Authenticate with DigitalOcean using API token
     - doctl auth init --access-token $DO_ACCESS_TOKEN
     
     # Get DigitalOcean Kubernetes cluster credentials for kubectl
     - doctl kubernetes cluster kubeconfig save $DO_CLUSTER_NAME
+
+    # Verify doctl installation
+    - doctl kubernetes cluster list
+    - doctl account get
     
     # Install kubectl if not already available in the image
     - |
