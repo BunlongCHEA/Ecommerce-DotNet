@@ -132,7 +132,7 @@ build:
 # Configure Traefik for TCP ports (SQL Server & MongoDB) - Using Alpine
 infrastructure:
   stage: infrastructure
-  image: alpine:3.19
+  image: alpine:3.22
   before_script:
     # Install required packages
     - apk add --no-cache curl tar openssh-client bash
@@ -189,12 +189,12 @@ infrastructure:
         kubectl rollout status daemonset traefik -n kube-system --timeout=120s
       else
         echo "Traefik not found as deployment or daemonset, checking pods..."
-        kubectl get pods -n kube-system -l app. kubernetes.io/name=traefik
+        kubectl get pods -n kube-system -l app.kubernetes.io/name=traefik
       fi
     
     # Verify Traefik is running
     - echo "=== Traefik Status ==="
-    - kubectl get pods -n kube-system -l app. kubernetes.io/name=traefik
+    - kubectl get pods -n kube-system -l app.kubernetes.io/name=traefik
     
     # Verify entrypoints are configured
     - echo "=== Traefik Service Ports ==="
@@ -208,7 +208,7 @@ infrastructure:
 # Deploy app & database to k3s using kubectl & ArgoCD - Using Alpine
 deploy:
   stage: deploy
-  image: alpine:3.19
+  image: alpine:3.22
   variables:
     KUBECONFIG: "/tmp/kubeconfig"
   before_script:
@@ -250,7 +250,7 @@ deploy:
     - echo "=== Starting Deployment to k3s ==="
 
     # Create namespace if it doesn't exist
-    - kubectl create namespace production --dry-run=client -o yaml | kubectl apply -f -
+    - kubectl create namespace ${KUBE_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
     
     # Create namespace for argocd if it doesn't exist
     - kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
@@ -294,9 +294,9 @@ deploy:
     # Display deployment status
     - echo "=== Deployment Status ==="
     - kubectl get applications -n argocd || true
-    - kubectl get pods -n production
-    - kubectl get svc -n production
-    - kubectl get ingress -n production || true
+    - kubectl get pods -n ${KUBE_NAMESPACE}
+    - kubectl get svc -n ${KUBE_NAMESPACE}
+    - kubectl get ingress -n ${KUBE_NAMESPACE} || true
 
   when: manual
   only:
