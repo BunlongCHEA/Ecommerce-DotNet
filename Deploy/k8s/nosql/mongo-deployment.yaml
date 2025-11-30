@@ -127,7 +127,7 @@ spec:
   resources:
     requests:
       storage: 10Gi
-  storageClassName: do-block-storage  # do-block-storage on DigitalOcean - standard-rwo on GKE - local-path on k3s default storage
+  storageClassName: local-path  # do-block-storage on DigitalOcean - standard-rwo on GKE - local-path on k3s default storage
 
 ---
 # MongoDB Service
