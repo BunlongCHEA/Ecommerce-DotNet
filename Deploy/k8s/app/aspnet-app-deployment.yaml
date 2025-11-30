@@ -280,16 +280,16 @@ spec:
             name: aspnet-service
             port:
               number: 80
-  - host: www.ecommerceapi.bunlong.site
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: aspnet-service
-            port:
-              number: 80
+  # - host: www.ecommerceapi.bunlong.site
+  #   http:
+  #     paths:
+  #     - path: /
+  #       pathType: Prefix
+  #       backend:
+  #         service:
+  #           name: aspnet-service
+  #           port:
+  #             number: 80
 
 # ---
 # # ConfigMap for proxy headers
