@@ -19,7 +19,7 @@ spec:
         protocol: TCP
     additionalArguments:
       - "--entrypoints.mssql.address=:1433/tcp"
-      - "--entrypoints. mongodb.address=:27017/tcp"
+      - "--entrypoints.mongodb.address=:27017/tcp"
     # Enable access logs for debugging
     logs:
       access:
