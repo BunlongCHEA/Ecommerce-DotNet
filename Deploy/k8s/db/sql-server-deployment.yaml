@@ -25,9 +25,26 @@ spec:
         command: ['sh', '-c']
         args:
           - |
+            echo "=== Setting up SQL Server data directory ==="
+            # Create required directories
+            mkdir -p /var/opt/mssql/data
+            mkdir -p /var/opt/mssql/log
+            mkdir -p /var/opt/mssql/secrets
+            
+            # Check if data directory has corrupted files
+            if [ -f /var/opt/mssql/data/master.mdf ]; then
+              echo "Existing data files found"
+              ls -la /var/opt/mssql/data/
+            else
+              echo "No existing data files, fresh installation"
+            fi
+            
+            # Fix ownership - SQL Server runs as mssql user (UID 10001)
             chown -R 10001:0 /var/opt/mssql
             chmod -R 755 /var/opt/mssql
-            ls -la /var/opt/mssql
+            
+            echo "=== Directory structure ==="
+            ls -la /var/opt/mssql/
         securityContext:
           runAsUser: 0  # Run as root to change permissions
         volumeMounts:
@@ -49,12 +66,17 @@ spec:
               key: SA_PASSWORD
         - name: MSSQL_PID
           value: "Express"
+        # Set data directories explicitly
+        - name: MSSQL_DATA_DIR
+          value: "/var/opt/mssql/data"
+        - name: MSSQL_LOG_DIR
+          value: "/var/opt/mssql/log"
         resources:
           requests:
             memory: "512Mi" # 1Gi, 512Mi
             cpu: "250m" # 500m, 250m
           limits:
-            memory: "1Gi"
+            memory: "2Gi"
             cpu: "1000m"
         volumeMounts:
         - name: mssql-persistent-storage
@@ -69,6 +91,11 @@ spec:
             port: 1433
           initialDelaySeconds: 60
           periodSeconds: 30
+        # Security context for SQL Server
+        securityContext:
+          runAsUser: 10001
+          runAsGroup: 0
+          allowPrivilegeEscalation: false
       volumes:
       - name: mssql-persistent-storage
         persistentVolumeClaim:
