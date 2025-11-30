@@ -267,7 +267,7 @@ spec:
   tls:
   - hosts:
     - ecommerceapi.bunlong.site
-    - www.ecommerceapi.bunlong.site
+    # - www.ecommerceapi.bunlong.site
     secretName: aspnet-tls-secret # cert-manager will create this secret
   rules:
   - host: ecommerceapi.bunlong.site
